@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #0A0E14;
+    color: #E2EBF4;
+  }
+
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0A0E14;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1E2A38;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00D4A0;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-quorum-surface border border-quorum-border rounded-xl p-6;
+  }
+
+  .btn-primary {
+    @apply bg-quorum-green text-quorum-bg font-display font-medium px-6 py-2.5 rounded-lg
+           hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed
+           text-sm tracking-wide;
+  }
+
+  .btn-secondary {
+    @apply border border-quorum-border text-quorum-text font-display font-medium px-6 py-2.5 rounded-lg
+           hover:border-quorum-green/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+           text-sm tracking-wide;
+  }
+
+  .input {
+    @apply w-full bg-quorum-bg border border-quorum-border rounded-lg px-4 py-3
+           text-quorum-text font-display text-sm placeholder-quorum-muted
+           focus:outline-none focus:border-quorum-green/50 transition-colors;
+  }
+
+  .label {
+    @apply block text-xs text-quorum-muted font-display tracking-widest uppercase mb-2;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded border text-xs font-display;
+  }
+
+  .stat-card {
+    @apply bg-quorum-surface border border-quorum-border rounded-xl p-5 flex flex-col gap-1;
+  }
+}
