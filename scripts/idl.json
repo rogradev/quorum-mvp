@@ -1,0 +1,26 @@
+{
+  "address": "8rose6K7Qzov3C5UrgRe64GKrS5SGXZWJqDMfujEm2af",
+  "metadata": {
+    "name": "quorum",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Quorum Protocol - Community-validated token launchpad"
+  },
+  "instructions": [
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [],
+      "args": []
+    }
+  ]
+}

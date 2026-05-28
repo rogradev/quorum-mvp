@@ -1,0 +1,15 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token};
+use crate::state::{Platform, Project};
+use crate::constants::*;
+use crate::errors::QuorumError;
+use crate::{CreateProject};
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct CreateProjectParams {
+    pub name: String,
+    pub ticker: String,
+    pub description: String,
+    pub website_url: String,
+    pub raise_goal: u64,
+}

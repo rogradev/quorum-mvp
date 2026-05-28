@@ -1,0 +1,14 @@
+/home/rogercryptodev/quorum-mvp/program/target/debug/deps/serde-03335d69dcbb0e7c.d: /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/rogercryptodev/quorum-mvp/program/target/debug/build/serde-17ef7af06b3ebf7c/out/private.rs
+
+/home/rogercryptodev/quorum-mvp/program/target/debug/deps/libserde-03335d69dcbb0e7c.rlib: /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/rogercryptodev/quorum-mvp/program/target/debug/build/serde-17ef7af06b3ebf7c/out/private.rs
+
+/home/rogercryptodev/quorum-mvp/program/target/debug/deps/libserde-03335d69dcbb0e7c.rmeta: /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/rogercryptodev/quorum-mvp/program/target/debug/build/serde-17ef7af06b3ebf7c/out/private.rs
+
+/home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/home/rogercryptodev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/home/rogercryptodev/quorum-mvp/program/target/debug/build/serde-17ef7af06b3ebf7c/out/private.rs:
+
+# env-dep:OUT_DIR=/home/rogercryptodev/quorum-mvp/program/target/debug/build/serde-17ef7af06b3ebf7c/out
