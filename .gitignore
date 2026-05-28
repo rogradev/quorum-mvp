@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+scripts/node_modules/
+app/node_modules/
+
+# Anchor build artifacts
+program/target/
+program/.anchor/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# Logs
+*.log
