@@ -117,6 +117,20 @@ export const QUORUM_IDL = {
       ],
       args: [],
     },
+    {
+      name: "claimTokens",
+      accounts: [
+        { name: "project", isMut: false, isSigner: false },
+        { name: "contribution", isMut: true, isSigner: false },
+        { name: "tokenMint", isMut: true, isSigner: false },
+        { name: "contributorTokenAccount", isMut: true, isSigner: false },
+        { name: "contributor", isMut: true, isSigner: true },
+        { name: "tokenProgram", isMut: false, isSigner: false },
+        { name: "associatedTokenProgram", isMut: false, isSigner: false },
+        { name: "systemProgram", isMut: false, isSigner: false },
+      ],
+      args: [],
+    },
   ],
   accounts: [
     {
@@ -285,7 +299,14 @@ export function getVaultPda(projectId: bigint): [PublicKey, number] {
   );
 }
 
-// PDAs para las nuevas instrucciones
 export function getOpenEconomicPhasePda(projectId: bigint): [PublicKey, number] {
-  return getProjectPda(projectId); // misma cuenta de proyecto
+  return getProjectPda(projectId);
+}
+
+export async function getOrCreateContributorAta(
+  mint: PublicKey,
+  owner: PublicKey
+): Promise<PublicKey> {
+  const { getAssociatedTokenAddressSync } = await import("@solana/spl-token");
+  return getAssociatedTokenAddressSync(mint, owner);
 }

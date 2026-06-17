@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 pub mod constants;
 pub mod errors;
@@ -125,6 +126,33 @@ pub struct TriggerInactivity<'info> {
     pub caller: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct ClaimTokens<'info> {
+    #[account(seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
+    pub project: Account<'info, Project>,
+    #[account(
+        mut,
+        seeds = [CONTRIBUTION_SEED, &project.project_id.to_le_bytes(), contributor.key().as_ref()],
+        bump = contribution.bump,
+        constraint = contribution.contributor == contributor.key()
+    )]
+    pub contribution: Account<'info, Contribution>,
+    #[account(mut, constraint = token_mint.key() == project.token_mint)]
+    pub token_mint: Account<'info, Mint>,
+    #[account(
+        init_if_needed,
+        payer = contributor,
+        associated_token::mint = token_mint,
+        associated_token::authority = contributor,
+    )]
+    pub contributor_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub contributor: Signer<'info>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
 #[program]
 pub mod quorum {
     use super::*;
@@ -171,5 +199,9 @@ pub mod quorum {
 
     pub fn trigger_inactivity(ctx: Context<TriggerInactivity>) -> Result<()> {
         ix::dev_activity::trigger_inactivity(ctx)
+    }
+
+    pub fn claim_tokens(ctx: Context<ClaimTokens>) -> Result<()> {
+        ix::claim_tokens::handler(ctx)
     }
 }
