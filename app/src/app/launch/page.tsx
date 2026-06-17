@@ -8,7 +8,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getProgram, getPlatformPda, getProjectPda } from "@/lib/anchor";
 import { SOL_PRICE_USD } from "@/lib/constants";
 
-const MIN_RAISE_USD = 100; // $100,000 minimum — matches MIN_RAISE_LAMPORTS on-chain
+const MIN_RAISE_USD = 100_000; // $100,000 minimum — matches MIN_RAISE_LAMPORTS on-chain
 
 export default function LaunchPage() {
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
@@ -113,8 +113,8 @@ export default function LaunchPage() {
         </h3>
         <ul className="space-y-1.5">
           {[
-            "Fase 1: 7 días de votación social (sin capital en juego)",
-            "Fase 2: 14 días de contribuciones — mínimo 1,000 holders",
+            "Fase 1: 30 días de votación social (sin capital en juego)",
+            "Fase 2: 270 días de contribuciones — mínimo 1,000 holders",
             "Cada holder puede tener máximo 0.1% del supply",
             "Vesting bilateral de 9 meses — dev y holders bloqueados",
             "La plataforma retiene 0.1% del total recaudado",
@@ -292,7 +292,7 @@ function SuccessState({ txSig }: { txSig: string }) {
         ¡Proyecto creado!
       </h3>
       <p className="text-quorum-muted text-sm mb-6">
-        La votación social ha comenzado. Tienes 7 días para que la comunidad
+        La votación social ha comenzado. Tienes 30 días para que la comunidad
         valide tu propuesta.
       </p>
       <div className="bg-quorum-bg border border-quorum-border rounded-lg p-3 mb-6">
