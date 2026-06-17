@@ -59,8 +59,26 @@ pub const CONTRIBUTION_SEED: &[u8] = b"contribution";
 /// Semilla PDA del voto social
 pub const VOTE_SEED: &[u8] = b"vote";
 
+/// Semilla PDA del vault de fondos del proyecto
+pub const VAULT_SEED: &[u8] = b"vault";
+
 /// Días de inactividad del dev antes de alerta pública (30 días)
 pub const INACTIVITY_ALERT_SECS: i64 = 30 * 24 * 60 * 60;
+
+// ── Pyth oracle ────────────────────────────────────────────────
+/// Edad máxima del precio Pyth aceptada (60 segundos)
+pub const MAX_PRICE_AGE_SECS: u64 = 60;
+
+/// Precio mínimo de SOL en USD (protección contra crash extremo)
+pub const MIN_SOL_PRICE_USD: u64 = 1;
+
+/// Precio máximo de SOL en USD (protección contra pump extremo)
+pub const MAX_SOL_PRICE_USD: u64 = 10_000;
+
+/// Feed Pyth SOL/USD en devnet
+/// Mainnet: H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG
+pub const PYTH_SOL_USD_FEED: anchor_lang::prelude::Pubkey =
+    anchor_lang::solana_program::pubkey!("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix");
 
 /// Días de inactividad antes de bloqueo del dev (60 días)
 pub const INACTIVITY_LOCK_SECS: i64 = 60 * 24 * 60 * 60;

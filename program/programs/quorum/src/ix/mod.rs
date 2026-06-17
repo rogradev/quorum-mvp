@@ -6,3 +6,4 @@ pub mod finalize_funding;
 pub mod refund;
 pub mod dev_activity;
 pub mod claim_tokens;
+pub mod close_vault;

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
-use crate::state::{Platform, Project, ProjectState};
+use crate::state::{Platform, Project, ProjectState, VaultAccount};
 use crate::constants::*;
 use crate::errors::QuorumError;
 
@@ -22,8 +22,10 @@ pub fn handler(ctx: Context<crate::CreateProject>, params: CreateProjectParams) 
     require!(params.raise_goal >= MIN_RAISE_LAMPORTS, QuorumError::RaiseTooLow);
 
     let platform = &mut ctx.accounts.platform;
-    let project = &mut ctx.accounts.project;
     let now = Clock::get()?.unix_timestamp;
+    // Capturar la clave del proyecto antes del borrow mutable
+    let project_key = ctx.accounts.project.key();
+    let project = &mut ctx.accounts.project;
 
     project.dev = ctx.accounts.dev.key();
     project.token_mint = ctx.accounts.token_mint.key();
@@ -51,6 +53,13 @@ pub fn handler(ctx: Context<crate::CreateProject>, params: CreateProjectParams) 
     project.last_dev_activity = now;
     project.dev_locked = false;
     project.bump = ctx.bumps.project;
+
+    // Inicializar vault del proyecto
+    let vault = &mut ctx.accounts.vault;
+    vault.project = project_key;
+    vault.total_received = 0;
+    vault.total_refunded = 0;
+    vault.bump = ctx.bumps.vault;
 
     platform.total_projects = platform
         .total_projects

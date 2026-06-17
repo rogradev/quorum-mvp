@@ -26,6 +26,12 @@ pub struct Contribution {
     /// Timestamp de la contribución
     pub contributed_at: i64,
 
+    /// Timestamp del reembolso (0 si no ha sido reembolsado)
+    pub refunded_at: i64,
+
+    /// Precio de SOL en USD al momento de la contribución (consulta Pyth)
+    pub sol_price_at_contribution: u64,
+
     /// Bump del PDA
     pub bump: u8,
 }

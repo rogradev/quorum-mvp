@@ -1,14 +1,15 @@
 use anchor_lang::prelude::*;
-use crate::state::{Project, ProjectState, Contribution};
+use crate::state::{Project, ProjectState, Contribution, VaultAccount};
 use crate::constants::*;
 use crate::errors::QuorumError;
 
 /// Reembolsa al holder si el proyecto falló.
-/// Devuelve el 99% del aporte (el 1% ya fue cobrado por la plataforma al contribuir).
-/// En realidad devuelve el net_contribution completo que está en el vault.
+/// Devuelve el 99% neto depositado (el 1% de fee fue no-reembolsable al contribuir).
+/// El vault es program-owned; los lamports se mueven directamente con checks de seguridad.
 pub fn handler(ctx: Context<crate::Refund>) -> Result<()> {
     let project = &ctx.accounts.project;
     let contribution = &mut ctx.accounts.contribution;
+    let now = Clock::get()?.unix_timestamp;
 
     require!(
         project.state == ProjectState::Failed,
@@ -23,78 +24,65 @@ pub fn handler(ctx: Context<crate::Refund>) -> Result<()> {
     require!(!contribution.refunded, QuorumError::NothingToRefund);
 
     let refund_amount = contribution.amount_lamports;
-    let project_id_bytes = project.project_id.to_le_bytes();
 
-    // Encontrar el bump del vault
-    let vault_seeds = &[
-        b"vault",
-        project_id_bytes.as_ref(),
-        &[ctx.bumps.project_vault],
-    ];
+    // ── Verificar que el vault tiene saldo suficiente ────────
+    // El vault debe mantener el mínimo rent-exempt después del reembolso
+    let rent = Rent::get()?;
+    let vault_data_len = ctx.accounts.vault.to_account_info().data_len();
+    let vault_rent_exempt = rent.minimum_balance(vault_data_len);
+    let vault_lamports = ctx.accounts.vault.to_account_info().lamports();
 
-    // Transferir desde el vault al contribuidor
-    **ctx.accounts.project_vault.try_borrow_mut_lamports()? = ctx
-        .accounts
-        .project_vault
-        .lamports()
+    require!(
+        vault_lamports >= refund_amount
+            .checked_add(vault_rent_exempt)
+            .ok_or(QuorumError::ArithmeticOverflow)?,
+        QuorumError::InsufficientVaultBalance
+    );
+
+    // ── Transferir lamports: vault → contributor ─────────────
+    // Para cuentas program-owned, la única forma válida de mover lamports
+    // es manipulación directa (system_program::transfer requiere from = system-owned).
+    let contributor_lamports = ctx.accounts.contributor.to_account_info().lamports();
+
+    **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? = vault_lamports
         .checked_sub(refund_amount)
         .ok_or(QuorumError::ArithmeticOverflow)?;
 
-    **ctx.accounts.contributor.try_borrow_mut_lamports()? = ctx
-        .accounts
-        .contributor
-        .lamports()
+    **ctx.accounts.contributor.to_account_info().try_borrow_mut_lamports()? =
+        contributor_lamports
+            .checked_add(refund_amount)
+            .ok_or(QuorumError::ArithmeticOverflow)?;
+
+    // ── Actualizar contabilidad del vault ────────────────────
+    let vault = &mut ctx.accounts.vault;
+    vault.total_refunded = vault
+        .total_refunded
         .checked_add(refund_amount)
         .ok_or(QuorumError::ArithmeticOverflow)?;
 
+    // ── Marcar contribución como reembolsada ─────────────────
     contribution.refunded = true;
+    contribution.refunded_at = now;
     contribution.amount_lamports = 0;
 
-    emit!(RefundIssued {
+    emit!(RefundProcessed {
         project_id: project.project_id,
         contributor: ctx.accounts.contributor.key(),
         refund_amount,
+        refunded_at: now,
+        vault_total_refunded: vault.total_refunded,
+        vault_total_received: vault.total_received,
     });
-
-    // Suprimir advertencia de unused variable
-    let _ = vault_seeds;
 
     Ok(())
 }
 
-#[derive(Accounts)]
-pub struct Refund<'info> {
-    #[account(
-        seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()],
-        bump = project.bump
-    )]
-    pub project: Account<'info, Project>,
-
-    #[account(
-        mut,
-        seeds = [CONTRIBUTION_SEED, &project.project_id.to_le_bytes(), contributor.key().as_ref()],
-        bump = contribution.bump,
-        constraint = contribution.contributor == contributor.key()
-    )]
-    pub contribution: Account<'info, Contribution>,
-
-    /// CHECK: Vault del proyecto del que salen los fondos
-    #[account(
-        mut,
-        seeds = [b"vault", &project.project_id.to_le_bytes()],
-        bump
-    )]
-    pub project_vault: UncheckedAccount<'info>,
-
-    #[account(mut)]
-    pub contributor: Signer<'info>,
-
-    pub system_program: Program<'info, System>,
-}
-
 #[event]
-pub struct RefundIssued {
+pub struct RefundProcessed {
     pub project_id: u64,
     pub contributor: Pubkey,
     pub refund_amount: u64,
+    pub refunded_at: i64,
+    pub vault_total_refunded: u64,
+    pub vault_total_received: u64,
 }

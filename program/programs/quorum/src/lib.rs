@@ -6,11 +6,15 @@ pub mod constants;
 pub mod errors;
 pub mod state;
 pub mod ix;
+pub mod utils;
 
-use crate::state::{Platform, Project, Contribution, SocialVote};
+use crate::state::{Platform, Project, Contribution, SocialVote, VaultAccount};
 use crate::constants::*;
+use crate::errors::QuorumError;
 
 declare_id!("DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk");
+
+// ── Contextos de cuentas ───────────────────────────────────────
 
 #[derive(Accounts)]
 pub struct InitializePlatform<'info> {
@@ -18,7 +22,7 @@ pub struct InitializePlatform<'info> {
     pub platform: Account<'info, Platform>,
     #[account(mut)]
     pub authority: Signer<'info>,
-    /// CHECK: fee destination
+    /// CHECK: fee destination — validado solo por su clave pública
     pub treasury: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
@@ -28,9 +32,29 @@ pub struct InitializePlatform<'info> {
 pub struct CreateProject<'info> {
     #[account(mut, seeds = [PLATFORM_SEED], bump = platform.bump)]
     pub platform: Account<'info, Platform>,
-    #[account(init, payer = dev, space = 8 + Project::INIT_SPACE, seeds = [PROJECT_SEED, &platform.total_projects.to_le_bytes()], bump)]
+    #[account(
+        init,
+        payer = dev,
+        space = 8 + Project::INIT_SPACE,
+        seeds = [PROJECT_SEED, &platform.total_projects.to_le_bytes()],
+        bump
+    )]
     pub project: Account<'info, Project>,
-    #[account(init, payer = dev, mint::decimals = TOKEN_DECIMALS, mint::authority = project, mint::freeze_authority = project)]
+    #[account(
+        init,
+        payer = dev,
+        space = 8 + VaultAccount::INIT_SPACE,
+        seeds = [VAULT_SEED, &platform.total_projects.to_le_bytes()],
+        bump
+    )]
+    pub vault: Account<'info, VaultAccount>,
+    #[account(
+        init,
+        payer = dev,
+        mint::decimals = TOKEN_DECIMALS,
+        mint::authority = project,
+        mint::freeze_authority = project
+    )]
     pub token_mint: Account<'info, Mint>,
     #[account(mut)]
     pub dev: Signer<'info>,
@@ -43,7 +67,13 @@ pub struct CreateProject<'info> {
 pub struct CastSocialVote<'info> {
     #[account(mut, seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
     pub project: Account<'info, Project>,
-    #[account(init, payer = voter, space = 8 + SocialVote::INIT_SPACE, seeds = [VOTE_SEED, &project.project_id.to_le_bytes(), voter.key().as_ref()], bump)]
+    #[account(
+        init,
+        payer = voter,
+        space = 8 + SocialVote::INIT_SPACE,
+        seeds = [VOTE_SEED, &project.project_id.to_le_bytes(), voter.key().as_ref()],
+        bump
+    )]
     pub social_vote: Account<'info, SocialVote>,
     #[account(mut)]
     pub voter: Signer<'info>,
@@ -71,16 +101,29 @@ pub struct Contribute<'info> {
     pub platform: Account<'info, Platform>,
     #[account(mut, seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
     pub project: Account<'info, Project>,
-    #[account(init_if_needed, payer = contributor, space = 8 + Contribution::INIT_SPACE, seeds = [CONTRIBUTION_SEED, &project.project_id.to_le_bytes(), contributor.key().as_ref()], bump)]
+    #[account(
+        init_if_needed,
+        payer = contributor,
+        space = 8 + Contribution::INIT_SPACE,
+        seeds = [CONTRIBUTION_SEED, &project.project_id.to_le_bytes(), contributor.key().as_ref()],
+        bump
+    )]
     pub contribution: Account<'info, Contribution>,
-    /// CHECK: project vault PDA
-    #[account(mut, seeds = [b"vault", &project.project_id.to_le_bytes()], bump)]
-    pub project_vault: UncheckedAccount<'info>,
-    /// CHECK: platform treasury
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &project.project_id.to_le_bytes()],
+        bump = vault.bump,
+        constraint = vault.project == project.key() @ QuorumError::VaultProjectMismatch
+    )]
+    pub vault: Account<'info, VaultAccount>,
+    /// CHECK: tesorería de la plataforma — validada por constraint
     #[account(mut, constraint = treasury.key() == platform.treasury)]
     pub treasury: UncheckedAccount<'info>,
     #[account(mut)]
     pub contributor: Signer<'info>,
+    /// CHECK: feed Pyth SOL/USD — validado en handler (edad, rango, owner)
+    #[account(constraint = *price_feed.key == PYTH_SOL_USD_FEED @ QuorumError::InvalidPriceFeed)]
+    pub price_feed: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -95,6 +138,15 @@ pub struct EmitHealthCheck<'info> {
 pub struct FinalizeFunding<'info> {
     #[account(mut, seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
     pub project: Account<'info, Project>,
+    #[account(
+        seeds = [VAULT_SEED, &project.project_id.to_le_bytes()],
+        bump = vault.bump,
+        constraint = vault.project == project.key() @ QuorumError::VaultProjectMismatch
+    )]
+    pub vault: Account<'info, VaultAccount>,
+    /// CHECK: feed Pyth SOL/USD — validado en handler (edad, rango, owner)
+    #[account(constraint = *price_feed.key == PYTH_SOL_USD_FEED @ QuorumError::InvalidPriceFeed)]
+    pub price_feed: AccountInfo<'info>,
     pub caller: Signer<'info>,
 }
 
@@ -102,11 +154,20 @@ pub struct FinalizeFunding<'info> {
 pub struct Refund<'info> {
     #[account(seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
     pub project: Account<'info, Project>,
-    #[account(mut, seeds = [CONTRIBUTION_SEED, &project.project_id.to_le_bytes(), contributor.key().as_ref()], bump = contribution.bump, constraint = contribution.contributor == contributor.key())]
+    #[account(
+        mut,
+        seeds = [CONTRIBUTION_SEED, &project.project_id.to_le_bytes(), contributor.key().as_ref()],
+        bump = contribution.bump,
+        constraint = contribution.contributor == contributor.key()
+    )]
     pub contribution: Account<'info, Contribution>,
-    /// CHECK: project vault
-    #[account(mut, seeds = [b"vault", &project.project_id.to_le_bytes()], bump)]
-    pub project_vault: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &project.project_id.to_le_bytes()],
+        bump = vault.bump,
+        constraint = vault.project == project.key() @ QuorumError::VaultProjectMismatch
+    )]
+    pub vault: Account<'info, VaultAccount>,
     #[account(mut)]
     pub contributor: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -152,6 +213,24 @@ pub struct ClaimTokens<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
+
+#[derive(Accounts)]
+pub struct CloseVault<'info> {
+    #[account(seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
+    pub project: Account<'info, Project>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED, &project.project_id.to_le_bytes()],
+        bump = vault.bump,
+        constraint = vault.project == project.key() @ QuorumError::VaultProjectMismatch,
+        close = caller
+    )]
+    pub vault: Account<'info, VaultAccount>,
+    #[account(mut)]
+    pub caller: Signer<'info>,
+}
+
+// ── Instrucciones ──────────────────────────────────────────────
 
 #[program]
 pub mod quorum {
@@ -203,5 +282,9 @@ pub mod quorum {
 
     pub fn claim_tokens(ctx: Context<ClaimTokens>) -> Result<()> {
         ix::claim_tokens::handler(ctx)
+    }
+
+    pub fn close_vault(ctx: Context<CloseVault>) -> Result<()> {
+        ix::close_vault::handler(ctx)
     }
 }

@@ -83,4 +83,24 @@ pub enum QuorumError {
 
     #[msg("Solo el administrador de la plataforma puede ejecutar esto")]
     Unauthorized,
+
+    // ── Vault ─────────────────────────────────────────────────────
+    #[msg("El vault no pertenece a este proyecto")]
+    VaultProjectMismatch,
+
+    #[msg("Quedan reembolsos pendientes — el vault no se puede cerrar todavía")]
+    VaultNotFullyRefunded,
+
+    #[msg("El vault no tiene saldo suficiente para cubrir el reembolso")]
+    InsufficientVaultBalance,
+
+    // ── Pyth oracle ───────────────────────────────────────────────
+    #[msg("La cuenta del price feed de Pyth no es válida")]
+    InvalidPriceFeed,
+
+    #[msg("El precio de Pyth está desactualizado (más de 60 segundos)")]
+    StalePriceFeed,
+
+    #[msg("El precio de SOL está fuera del rango permitido ($1–$10,000)")]
+    PriceOutOfRange,
 }
