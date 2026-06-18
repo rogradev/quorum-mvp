@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use crate::state::{Project, ProjectState, SocialVote};
 use crate::constants::*;
 use crate::errors::QuorumError;
+use crate::utils::price;
 
 /// Cualquier wallet vota en la fase social.
 /// Sin requisitos económicos — es una señal de interés puro.
@@ -124,8 +125,8 @@ pub fn close_social_phase(ctx: Context<crate::CloseSocialPhase>) -> Result<()> {
     Ok(())
 }
 
-/// Emite los indicadores de salud trimestrales (informativos, no bloqueantes).
-/// Cualquiera puede llamar esto en el Mes 3 y Mes 6.
+/// Emite los indicadores de salud trimestrales y los hitos de milestone para el dashboard.
+/// Permissionless. Puede llamarse en cualquier momento durante la fase económica.
 pub fn emit_health_check(ctx: Context<crate::EmitHealthCheck>) -> Result<()> {
     let project = &mut ctx.accounts.project;
     let now = Clock::get()?.unix_timestamp;
@@ -185,7 +186,77 @@ pub fn emit_health_check(ctx: Context<crate::EmitHealthCheck>) -> Result<()> {
         });
     }
 
+    // ── Milestone: 1,000 holders ────────────────────────────
+    if project.holder_count >= MIN_HOLDERS && !project.holders_goal_emitted {
+        project.holders_goal_emitted = true;
+        emit!(HoldersGoalReached {
+            project_id: project.project_id,
+            holder_count: project.holder_count,
+            reached_at: now,
+        });
+    }
+
+    // ── Milestone: $100K USD recaudado + GraduationAvailable ─
+    let sol_price = price::get_sol_price_usd(&ctx.accounts.price_feed, now)?;
+    let min_raise = price::usd_to_lamports(100_000, sol_price)?;
+
+    if project.total_raised >= min_raise && !project.raise_goal_emitted {
+        project.raise_goal_emitted = true;
+        emit!(RaiseGoalReached {
+            project_id: project.project_id,
+            total_raised: project.total_raised,
+            sol_price_usd: sol_price,
+            reached_at: now,
+        });
+    }
+
+    // Graduation available when both conditions met AND Day 180+ from economic open
+    let graduation_start = project
+        .vesting_start
+        .checked_add(GRADUATION_MIN_SECS)
+        .ok_or(QuorumError::ArithmeticOverflow)?;
+
+    let holders_ok = project.holder_count >= MIN_HOLDERS;
+    let funds_ok = project.total_raised >= min_raise;
+
+    if holders_ok && funds_ok && now >= graduation_start && !project.graduation_available_emitted {
+        project.graduation_available_emitted = true;
+        emit!(GraduationAvailable {
+            project_id: project.project_id,
+            total_raised: project.total_raised,
+            holder_count: project.holder_count,
+            sol_price_usd: sol_price,
+            available_at: now,
+        });
+    }
+
     Ok(())
+}
+
+// ── Milestone events ────────────────────────────────────────
+
+#[event]
+pub struct HoldersGoalReached {
+    pub project_id: u64,
+    pub holder_count: u64,
+    pub reached_at: i64,
+}
+
+#[event]
+pub struct RaiseGoalReached {
+    pub project_id: u64,
+    pub total_raised: u64,
+    pub sol_price_usd: u64,
+    pub reached_at: i64,
+}
+
+#[event]
+pub struct GraduationAvailable {
+    pub project_id: u64,
+    pub total_raised: u64,
+    pub holder_count: u64,
+    pub sol_price_usd: u64,
+    pub available_at: i64,
 }
 
 // ── Structs de cuentas ─────────────────────────────────────
@@ -248,6 +319,10 @@ pub struct EmitHealthCheck<'info> {
         bump = project.bump
     )]
     pub project: Account<'info, Project>,
+
+    /// CHECK: feed Pyth SOL/USD — validado en handler para milestone de fondeo
+    #[account(constraint = *price_feed.key == PYTH_SOL_USD_FEED @ QuorumError::InvalidPriceFeed)]
+    pub price_feed: AccountInfo<'info>,
 
     /// Permissionless — cualquiera puede emitir el health check
     pub caller: Signer<'info>,

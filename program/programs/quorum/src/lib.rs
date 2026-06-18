@@ -131,11 +131,14 @@ pub struct Contribute<'info> {
 pub struct EmitHealthCheck<'info> {
     #[account(mut, seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
     pub project: Account<'info, Project>,
+    /// CHECK: feed Pyth SOL/USD — validado en handler para milestone de fondeo
+    #[account(constraint = *price_feed.key == PYTH_SOL_USD_FEED @ QuorumError::InvalidPriceFeed)]
+    pub price_feed: AccountInfo<'info>,
     pub caller: Signer<'info>,
 }
 
 #[derive(Accounts)]
-pub struct FinalizeFunding<'info> {
+pub struct GraduateProject<'info> {
     #[account(mut, seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
     pub project: Account<'info, Project>,
     #[account(
@@ -147,6 +150,13 @@ pub struct FinalizeFunding<'info> {
     /// CHECK: feed Pyth SOL/USD — validado en handler (edad, rango, owner)
     #[account(constraint = *price_feed.key == PYTH_SOL_USD_FEED @ QuorumError::InvalidPriceFeed)]
     pub price_feed: AccountInfo<'info>,
+    pub caller: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct FinalizeFunding<'info> {
+    #[account(mut, seeds = [PROJECT_SEED, &project.project_id.to_le_bytes()], bump = project.bump)]
+    pub project: Account<'info, Project>,
     pub caller: Signer<'info>,
 }
 
@@ -262,6 +272,10 @@ pub mod quorum {
 
     pub fn emit_health_check(ctx: Context<EmitHealthCheck>) -> Result<()> {
         ix::social_vote::emit_health_check(ctx)
+    }
+
+    pub fn graduate_project(ctx: Context<GraduateProject>) -> Result<()> {
+        ix::graduate_project::handler(ctx)
     }
 
     pub fn finalize_funding(ctx: Context<FinalizeFunding>) -> Result<()> {

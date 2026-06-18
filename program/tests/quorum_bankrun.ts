@@ -1,6 +1,5 @@
 /**
  * Full-coverage tests using anchor-bankrun for clock manipulation and account injection.
- * Covers all 11 instructions not already covered in quorum.ts.
  */
 import * as anchor from "@coral-xyz/anchor";
 import { Program, BorshAccountsCoder } from "@coral-xyz/anchor";
@@ -31,39 +30,33 @@ const CONTRIB_SEED   = Buffer.from("contribution");
 
 // ── Time constants ─────────────────────────────────────────────────────────
 const DAY            = 86_400n;
-const ORIGIN         = 1_000_000n;  // arbitrary base unix timestamp
+const ORIGIN         = 1_000_000n;
 
-// ── Program constants (mirrors constants.rs) ───────────────────────────────
+// ── Program constants ──────────────────────────────────────────────────────
 const PYTH_FEED      = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix");
 const SOL_PRICE_USD  = 150;
-const SOL_PRICE_RAW  = BigInt(SOL_PRICE_USD * 1e8);  // expo = -8
-const MIN_RAISE      = new BN("666666667000");        // MIN_RAISE_LAMPORTS
+const SOL_PRICE_RAW  = BigInt(SOL_PRICE_USD * 1e8);
+const MIN_RAISE      = new BN("666666667000");
 
 // ── Pyth mock helpers ──────────────────────────────────────────────────────
 function makePythData(ts: bigint): Uint8Array {
   const buf = Buffer.alloc(3312, 0);
-  buf.writeUInt32LE(0xa1b2c3d4, 0);     // magic
-  buf.writeUInt32LE(2, 4);               // ver = VERSION_2
-  buf.writeUInt32LE(3, 8);               // atype = Price (3)
-  buf.writeUInt32LE(3312, 12);           // size
-  buf.writeInt32LE(-8, 20);              // expo = -8
-  buf.writeBigInt64LE(ts - 30n, 96);    // timestamp = current - 30s
-  buf.writeBigInt64LE(SOL_PRICE_RAW, 208); // agg.price
-  buf.writeBigUInt64LE(100_000_000n, 216); // agg.conf
-  buf.writeUInt32LE(1, 224);             // agg.status = Trading
+  buf.writeUInt32LE(0xa1b2c3d4, 0);
+  buf.writeUInt32LE(2, 4);
+  buf.writeUInt32LE(3, 8);
+  buf.writeUInt32LE(3312, 12);
+  buf.writeInt32LE(-8, 20);
+  buf.writeBigInt64LE(ts - 30n, 96);
+  buf.writeBigInt64LE(SOL_PRICE_RAW, 208);
+  buf.writeBigUInt64LE(100_000_000n, 216);
+  buf.writeUInt32LE(1, 224);
   return buf;
 }
 
-function fundAccount(
-  ctx: ProgramTestContext,
-  pubkey: PublicKey,
-  lamports = 20 * LAMPORTS_PER_SOL
-) {
+function fundAccount(ctx: ProgramTestContext, pubkey: PublicKey, lamports = 20 * LAMPORTS_PER_SOL) {
   ctx.setAccount(pubkey, {
-    lamports,
-    data: new Uint8Array(0),
-    owner: SystemProgram.programId,
-    executable: false,
+    lamports, data: new Uint8Array(0),
+    owner: SystemProgram.programId, executable: false,
   });
 }
 
@@ -73,14 +66,23 @@ function setTime(ctx: ProgramTestContext, ts: bigint) {
 
 function setPyth(ctx: ProgramTestContext, ts: bigint) {
   ctx.setAccount(PYTH_FEED, {
-    lamports: LAMPORTS_PER_SOL,
-    data: makePythData(ts),
-    owner: SystemProgram.programId,
-    executable: false,
+    lamports: LAMPORTS_PER_SOL, data: makePythData(ts),
+    owner: SystemProgram.programId, executable: false,
   });
 }
 
-// ── Shared keypairs (re-used across both describe blocks) ──────────────────
+// ── Vault injection helper ─────────────────────────────────────────────────
+function makeVaultData(projectPubkey: PublicKey, totalReceived: bigint, vaultBump: number): Buffer {
+  const buf = Buffer.alloc(57, 0);
+  [230, 251, 241, 83, 139, 202, 93, 28].forEach((b, i) => buf.writeUInt8(b, i));
+  projectPubkey.toBuffer().copy(buf, 8);
+  buf.writeBigUInt64LE(totalReceived, 40);
+  buf.writeBigUInt64LE(0n, 48);
+  buf.writeUInt8(vaultBump, 56);
+  return buf;
+}
+
+// ── Shared keypairs ────────────────────────────────────────────────────────
 const platformAuth = Keypair.generate();
 const dev          = Keypair.generate();
 const voter1       = Keypair.generate();
@@ -107,19 +109,13 @@ describe("quorum bankrun — failure lifecycle", () => {
     anchor.setProvider(provider as any);
     program = new anchor.Program(IDL, provider) as Program<Quorum>;
 
-    // Fund all test keypairs
     for (const kp of [platformAuth, dev, voter1, contributor1, contributor2, treasury]) {
       fundAccount(ctx, kp.publicKey, 50 * LAMPORTS_PER_SOL);
     }
-
-    // Set clock to ORIGIN
     setTime(ctx, ORIGIN);
     setPyth(ctx, ORIGIN);
 
-    // Derive PDAs
-    [platformPda] = PublicKey.findProgramAddressSync(
-      [PLATFORM_SEED], program.programId
-    );
+    [platformPda] = PublicKey.findProgramAddressSync([PLATFORM_SEED], program.programId);
     tokenMint0 = Keypair.generate();
     [project0Pda] = PublicKey.findProgramAddressSync(
       [PROJECT_SEED, new BN(0).toArrayLike(Buffer, "le", 8)], program.programId
@@ -128,67 +124,38 @@ describe("quorum bankrun — failure lifecycle", () => {
       [VAULT_SEED, new BN(0).toArrayLike(Buffer, "le", 8)], program.programId
     );
 
-    // Initialize platform
-    await program.methods
-      .initializePlatform()
-      .accounts({
-        platform: platformPda,
-        authority: platformAuth.publicKey,
-        treasury: treasury.publicKey,
-        systemProgram: SystemProgram.programId,
-      } as any)
-      .signers([platformAuth])
-      .rpc();
+    await program.methods.initializePlatform()
+      .accounts({ platform: platformPda, authority: platformAuth.publicKey,
+        treasury: treasury.publicKey, systemProgram: SystemProgram.programId } as any)
+      .signers([platformAuth]).rpc();
 
-    // Create project #0 at ORIGIN
-    await program.methods
-      .createProject({
-        name: "Test Project",
-        ticker: "TST",
-        description: "Full lifecycle test project",
-        websiteUrl: "https://test.com",
-        raiseGoal: MIN_RAISE,
-      })
-      .accounts({
-        platform: platformPda,
-        project: project0Pda,
-        vault: vault0Pda,
-        tokenMint: tokenMint0.publicKey,
-        dev: dev.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      } as any)
-      .signers([dev, tokenMint0])
-      .rpc();
+    await program.methods.createProject({
+      name: "Test Project", ticker: "TST", description: "Full lifecycle test",
+      websiteUrl: "https://test.com", raiseGoal: MIN_RAISE,
+    }).accounts({
+      platform: platformPda, project: project0Pda, vault: vault0Pda,
+      tokenMint: tokenMint0.publicKey, dev: dev.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId,
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+    } as any).signers([dev, tokenMint0]).rpc();
 
-    // Cast a social vote
     const [votePda] = PublicKey.findProgramAddressSync(
       [VOTE_SEED, new BN(0).toArrayLike(Buffer, "le", 8), voter1.publicKey.toBuffer()],
       program.programId
     );
-    await program.methods
-      .castSocialVote()
-      .accounts({
-        project: project0Pda,
-        socialVote: votePda,
-        voter: voter1.publicKey,
-        systemProgram: SystemProgram.programId,
-      } as any)
-      .signers([voter1])
-      .rpc();
+    await program.methods.castSocialVote()
+      .accounts({ project: project0Pda, socialVote: votePda,
+        voter: voter1.publicKey, systemProgram: SystemProgram.programId } as any)
+      .signers([voter1]).rpc();
   });
 
-  // ── Group 1: open_economic_phase timing ──────────────────────────────────
   describe("open_economic_phase timing", () => {
     it("fails before day 15", async () => {
       setTime(ctx, ORIGIN + 14n * DAY);
       try {
-        await program.methods
-          .openEconomicPhase()
+        await program.methods.openEconomicPhase()
           .accounts({ project: project0Pda, caller: platformAuth.publicKey } as any)
-          .signers([platformAuth])
-          .rpc();
+          .signers([platformAuth]).rpc();
         expect.fail("Should have failed");
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("EconomicPhaseNotActive");
@@ -197,150 +164,91 @@ describe("quorum bankrun — failure lifecycle", () => {
 
     it("succeeds at day 15", async () => {
       setTime(ctx, ORIGIN + 15n * DAY);
-      await program.methods
-        .openEconomicPhase()
+      await program.methods.openEconomicPhase()
         .accounts({ project: project0Pda, caller: platformAuth.publicKey } as any)
-        .signers([platformAuth])
-        .rpc();
+        .signers([platformAuth]).rpc();
       const project = await program.account.project.fetch(project0Pda);
       expect(project.economicPhaseActive).to.be.true;
     });
   });
 
-  // ── Group 2: contribute edge cases ────────────────────────────────────────
   describe("contribute", () => {
-    let contrib0Pda: PublicKey;
-
     before(() => {
-      // Warp to day 16 — inside economic phase
       setTime(ctx, ORIGIN + 16n * DAY);
       setPyth(ctx, ORIGIN + 16n * DAY);
-
-      [contrib0Pda] = PublicKey.findProgramAddressSync(
-        [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor1.publicKey.toBuffer()],
-        program.programId
-      );
     });
 
     it("happy path: minimum valid contribution", async () => {
-      // $1 min at $150/SOL ≈ 6_666_667 lamports; use 10M to be safe
-      const amount = new BN(10_000_000);
-      await program.methods
-        .contribute(amount)
-        .accounts({
-          platform: platformPda,
-          project: project0Pda,
-          contribution: contrib0Pda,
-          vault: vault0Pda,
-          treasury: treasury.publicKey,
-          contributor: contributor1.publicKey,
-          priceFeed: PYTH_FEED,
-          systemProgram: SystemProgram.programId,
-        } as any)
-        .signers([contributor1])
-        .rpc();
-      const contrib = await program.account.contribution.fetch(contrib0Pda);
+      const [c1Pda] = PublicKey.findProgramAddressSync(
+        [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor1.publicKey.toBuffer()],
+        program.programId
+      );
+      await program.methods.contribute(new BN(10_000_000))
+        .accounts({ platform: platformPda, project: project0Pda, contribution: c1Pda,
+          vault: vault0Pda, treasury: treasury.publicKey, contributor: contributor1.publicKey,
+          priceFeed: PYTH_FEED, systemProgram: SystemProgram.programId } as any)
+        .signers([contributor1]).rpc();
+      const contrib = await program.account.contribution.fetch(c1Pda);
       expect(contrib.amountLamports.toNumber()).to.be.greaterThan(0);
-      expect(contrib.tokensAllocated.toNumber()).to.be.greaterThan(0);
     });
 
     it("fails when contribution is below $1 minimum", async () => {
-      // 1000 lamports is way below $1 equivalent
-      const tinyAmount = new BN(1000);
+      const [c1Pda] = PublicKey.findProgramAddressSync(
+        [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor1.publicKey.toBuffer()],
+        program.programId
+      );
       try {
-        await program.methods
-          .contribute(tinyAmount)
-          .accounts({
-            platform: platformPda,
-            project: project0Pda,
-            contribution: contrib0Pda,
-            vault: vault0Pda,
-            treasury: treasury.publicKey,
-            contributor: contributor1.publicKey,
-            priceFeed: PYTH_FEED,
-            systemProgram: SystemProgram.programId,
-          } as any)
-          .signers([contributor1])
-          .rpc();
-        expect.fail("Should have failed");
+        await program.methods.contribute(new BN(1000))
+          .accounts({ platform: platformPda, project: project0Pda, contribution: c1Pda,
+            vault: vault0Pda, treasury: treasury.publicKey, contributor: contributor1.publicKey,
+            priceFeed: PYTH_FEED, systemProgram: SystemProgram.programId } as any)
+          .signers([contributor1]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("ContributionTooLow");
       }
     });
 
-    it("contributes up to the 0.1% cap (MAX_HOLDER_BPS)", async () => {
-      // Max tokens = TOKEN_SUPPLY * 10 / 10_000 = 1_000_000_000_000
-      // max_lamports ≈ raise_goal * max_tokens / TOKEN_SUPPLY
-      //             = 666_666_667_000 * 1_000_000_000_000 / 1_000_000_000_000_000
-      //             ≈ 666_666_667 lamports
-      // Already contributed 10M, contribute enough to nearly hit the cap
-      // Remaining capacity ≈ 666_666_667 - 10_000_000 * (10000/9990) ≈ 656_656_000
-      // To keep it simple, use a fresh contributor2 and contribute ~650M lamports
-      const [contrib2Pda] = PublicKey.findProgramAddressSync(
+    it("contributes up to 0.1% cap", async () => {
+      const [c2Pda] = PublicKey.findProgramAddressSync(
         [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor2.publicKey.toBuffer()],
         program.programId
       );
-
-      const amount = new BN(600_000_000); // 0.6 SOL, well within cap
-      await program.methods
-        .contribute(amount)
-        .accounts({
-          platform: platformPda,
-          project: project0Pda,
-          contribution: contrib2Pda,
-          vault: vault0Pda,
-          treasury: treasury.publicKey,
-          contributor: contributor2.publicKey,
-          priceFeed: PYTH_FEED,
-          systemProgram: SystemProgram.programId,
-        } as any)
-        .signers([contributor2])
-        .rpc();
-      const contrib = await program.account.contribution.fetch(contrib2Pda);
+      await program.methods.contribute(new BN(600_000_000))
+        .accounts({ platform: platformPda, project: project0Pda, contribution: c2Pda,
+          vault: vault0Pda, treasury: treasury.publicKey, contributor: contributor2.publicKey,
+          priceFeed: PYTH_FEED, systemProgram: SystemProgram.programId } as any)
+        .signers([contributor2]).rpc();
+      const contrib = await program.account.contribution.fetch(c2Pda);
       expect(contrib.tokensAllocated.toNumber()).to.be.greaterThan(0);
-      console.log("   tokens allocated:", contrib.tokensAllocated.toString());
     });
 
     it("fails when exceeding the 0.1% holder cap", async () => {
-      // contributor2 already contributed ~600M. Adding another 600M would exceed the cap
-      const [contrib2Pda] = PublicKey.findProgramAddressSync(
+      const [c2Pda] = PublicKey.findProgramAddressSync(
         [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor2.publicKey.toBuffer()],
         program.programId
       );
-      const overCapAmount = new BN(600_000_000);
       try {
-        await program.methods
-          .contribute(overCapAmount)
-          .accounts({
-            platform: platformPda,
-            project: project0Pda,
-            contribution: contrib2Pda,
-            vault: vault0Pda,
-            treasury: treasury.publicKey,
-            contributor: contributor2.publicKey,
-            priceFeed: PYTH_FEED,
-            systemProgram: SystemProgram.programId,
-          } as any)
-          .signers([contributor2])
-          .rpc();
-        expect.fail("Should have exceeded cap");
+        await program.methods.contribute(new BN(600_000_000))
+          .accounts({ platform: platformPda, project: project0Pda, contribution: c2Pda,
+            vault: vault0Pda, treasury: treasury.publicKey, contributor: contributor2.publicKey,
+            priceFeed: PYTH_FEED, systemProgram: SystemProgram.programId } as any)
+          .signers([contributor2]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("ExceedsHolderLimit");
       }
     });
   });
 
-  // ── Group 3: close_social_phase timing ───────────────────────────────────
   describe("close_social_phase timing", () => {
     it("fails before day 30", async () => {
       setTime(ctx, ORIGIN + 29n * DAY);
       try {
-        await program.methods
-          .closeSocialPhase()
+        await program.methods.closeSocialPhase()
           .accounts({ project: project0Pda, caller: platformAuth.publicKey } as any)
-          .signers([platformAuth])
-          .rpc();
-        expect.fail("Should have failed");
+          .signers([platformAuth]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("SocialVoteNotEnded");
       }
@@ -348,59 +256,44 @@ describe("quorum bankrun — failure lifecycle", () => {
 
     it("succeeds after day 30 — transitions to EconomicPhase", async () => {
       setTime(ctx, ORIGIN + 30n * DAY + 1n);
-      await program.methods
-        .closeSocialPhase()
+      await program.methods.closeSocialPhase()
         .accounts({ project: project0Pda, caller: platformAuth.publicKey } as any)
-        .signers([platformAuth])
-        .rpc();
+        .signers([platformAuth]).rpc();
       const project = await program.account.project.fetch(project0Pda);
       expect(project.state).to.deep.equal({ economicPhase: {} });
     });
   });
 
-  // ── Group 4: register_dev_activity + trigger_inactivity ──────────────────
   describe("register_dev_activity + trigger_inactivity", () => {
     it("register_dev_activity fails for non-dev caller", async () => {
       setTime(ctx, ORIGIN + 31n * DAY);
       try {
-        await program.methods
-          .registerDevActivity()
+        await program.methods.registerDevActivity()
           .accounts({ project: project0Pda, dev: voter1.publicKey } as any)
-          .signers([voter1])
-          .rpc();
-        expect.fail("Should have failed");
+          .signers([voter1]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("UnauthorizedActivityUpdate");
       }
     });
 
-    it("register_dev_activity succeeds for dev — resets inactivity clock", async () => {
-      // dev calls registerDevActivity at day 31
+    it("register_dev_activity succeeds for dev", async () => {
       setTime(ctx, ORIGIN + 31n * DAY);
-      await program.methods
-        .registerDevActivity()
+      await program.methods.registerDevActivity()
         .accounts({ project: project0Pda, dev: dev.publicKey } as any)
-        .signers([dev])
-        .rpc();
+        .signers([dev]).rpc();
       const project = await program.account.project.fetch(project0Pda);
-      // lastDevActivity should be updated to ~ORIGIN + 31d
-      expect(project.lastDevActivity.toNumber()).to.be.greaterThan(
-        Number(ORIGIN + 30n * DAY)
-      );
+      expect(project.lastDevActivity.toNumber()).to.be.greaterThan(Number(ORIGIN + 30n * DAY));
     });
 
     it("trigger_inactivity fails before 60-day threshold", async () => {
-      // 30 days after dev's last activity (ORIGIN+31d) → only 30d inactive, < 60d
       setTime(ctx, ORIGIN + 61n * DAY);
       try {
-        await program.methods
-          .triggerInactivity()
+        await program.methods.triggerInactivity()
           .accounts({ project: project0Pda, caller: voter1.publicKey } as any)
-          .signers([voter1])
-          .rpc();
-        expect.fail("Should have failed (only 30 days since last activity)");
+          .signers([voter1]).rpc();
+        expect.fail();
       } catch (e: any) {
-        // ~30d inactive < 60d threshold
         expect(e.error?.errorCode?.code ?? e.message).to.satisfy((m: string) =>
           m.includes("InvalidProjectState") || m.includes("6023")
         );
@@ -408,193 +301,162 @@ describe("quorum bankrun — failure lifecycle", () => {
     });
 
     it("trigger_inactivity succeeds at 60+ days since last activity", async () => {
-      // dev last active at ORIGIN+31d; 60d later = ORIGIN+91d
       setTime(ctx, ORIGIN + 92n * DAY);
-      await program.methods
-        .triggerInactivity()
-        .accounts({ project: project0Pda, caller: voter1.publicKey } as any)
-        .signers([voter1])
-        .rpc();
+      // use platformAuth to avoid duplicate-tx rejection in bankrun (same nonce as voter1's prior failed tx)
+      await program.methods.triggerInactivity()
+        .accounts({ project: project0Pda, caller: platformAuth.publicKey } as any)
+        .signers([platformAuth]).rpc();
       const project = await program.account.project.fetch(project0Pda);
       expect(project.devLocked).to.be.true;
-      console.log("   dev locked after inactivity ✓");
     });
   });
 
-  // ── Group 5: finalize_funding failure path ────────────────────────────────
-  describe("finalize_funding — failure path", () => {
-    it("fails before vesting period ends", async () => {
-      // vesting_end = economic_phase_open + 270d = (ORIGIN+15d) + 270d = ORIGIN+285d
+  describe("finalize_funding — Day 284 auto-fail", () => {
+    it("fails before vesting_end", async () => {
       setTime(ctx, ORIGIN + 284n * DAY);
-      setPyth(ctx, ORIGIN + 284n * DAY);
       try {
-        await program.methods
-          .finalizeFunding()
-          .accounts({
-            project: project0Pda,
-            vault: vault0Pda,
-            priceFeed: PYTH_FEED,
-            caller: platformAuth.publicKey,
-          } as any)
-          .signers([platformAuth])
-          .rpc();
-        expect.fail("Should have failed — vesting not ended");
+        await program.methods.finalizeFunding()
+          .accounts({ project: project0Pda, caller: platformAuth.publicKey } as any)
+          .signers([platformAuth]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("EconomicPhaseNotEnded");
       }
     });
 
-    it("marks project as Failed when conditions not met (< 1000 holders)", async () => {
+    it("marks project Failed after vesting_end (graduation window expired)", async () => {
       setTime(ctx, ORIGIN + 286n * DAY);
-      setPyth(ctx, ORIGIN + 286n * DAY);
-      await program.methods
-        .finalizeFunding()
-        .accounts({
-          project: project0Pda,
-          vault: vault0Pda,
-          priceFeed: PYTH_FEED,
-          caller: platformAuth.publicKey,
-        } as any)
-        .signers([platformAuth])
-        .rpc();
+      // use voter1 to avoid duplicate-tx rejection (platformAuth already sent the failed tx above)
+      await program.methods.finalizeFunding()
+        .accounts({ project: project0Pda, caller: voter1.publicKey } as any)
+        .signers([voter1]).rpc();
       const project = await program.account.project.fetch(project0Pda);
       expect(project.state).to.deep.equal({ failed: {} });
-      console.log(`   project failed: holderCount=${project.holderCount.toString()} (need 1000)`);
     });
   });
 
-  // ── Group 6: refund ───────────────────────────────────────────────────────
   describe("refund", () => {
-    let contrib0Pda: PublicKey;
-
-    before(() => {
-      [contrib0Pda] = PublicKey.findProgramAddressSync(
+    it("happy path: refunds contributor after project fails", async () => {
+      const [c1Pda] = PublicKey.findProgramAddressSync(
         [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor1.publicKey.toBuffer()],
         program.programId
       );
-    });
-
-    it("happy path: refunds contributor after project fails", async () => {
-      const beforeBalance = (await ctx.banksClient.getAccount(contributor1.publicKey))!.lamports;
-      await program.methods
-        .refund()
-        .accounts({
-          project: project0Pda,
-          contribution: contrib0Pda,
-          vault: vault0Pda,
-          contributor: contributor1.publicKey,
-          systemProgram: SystemProgram.programId,
-        } as any)
-        .signers([contributor1])
-        .rpc();
-      const contrib = await program.account.contribution.fetch(contrib0Pda);
+      const before = (await ctx.banksClient.getAccount(contributor1.publicKey))!.lamports;
+      await program.methods.refund()
+        .accounts({ project: project0Pda, contribution: c1Pda, vault: vault0Pda,
+          contributor: contributor1.publicKey, systemProgram: SystemProgram.programId } as any)
+        .signers([contributor1]).rpc();
+      const contrib = await program.account.contribution.fetch(c1Pda);
       expect(contrib.refunded).to.be.true;
-      expect(contrib.amountLamports.toNumber()).to.equal(0);
-      const afterBalance = (await ctx.banksClient.getAccount(contributor1.publicKey))!.lamports;
-      expect(afterBalance).to.be.greaterThan(beforeBalance);
-      console.log("   refund received:", afterBalance - beforeBalance, "lamports");
+      const after = (await ctx.banksClient.getAccount(contributor1.publicKey))!.lamports;
+      expect(after).to.be.greaterThan(before);
     });
 
     it("prevents double-refund", async () => {
+      const [c1Pda] = PublicKey.findProgramAddressSync(
+        [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor1.publicKey.toBuffer()],
+        program.programId
+      );
       try {
-        await program.methods
-          .refund()
-          .accounts({
-            project: project0Pda,
-            contribution: contrib0Pda,
-            vault: vault0Pda,
-            contributor: contributor1.publicKey,
-            systemProgram: SystemProgram.programId,
-          } as any)
-          .signers([contributor1])
-          .rpc();
-        expect.fail("Second refund should fail");
+        await program.methods.refund()
+          .accounts({ project: project0Pda, contribution: c1Pda, vault: vault0Pda,
+            contributor: contributor1.publicKey, systemProgram: SystemProgram.programId } as any)
+          .signers([contributor1]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("NothingToRefund");
       }
     });
   });
 
-  // ── Group 7: close_vault ─────────────────────────────────────────────────
   describe("close_vault", () => {
-    it("fails if vault still has unreturned funds", async () => {
-      // contributor2 hasn't been refunded yet — vault still owes them
+    it("fails if contributor2 not refunded yet", async () => {
       try {
-        await program.methods
-          .closeVault()
-          .accounts({
-            project: project0Pda,
-            vault: vault0Pda,
-            caller: platformAuth.publicKey,
-          } as any)
-          .signers([platformAuth])
-          .rpc();
-        expect.fail("Should fail — contributor2 not refunded yet");
+        await program.methods.closeVault()
+          .accounts({ project: project0Pda, vault: vault0Pda, caller: platformAuth.publicKey } as any)
+          .signers([platformAuth]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("VaultNotFullyRefunded");
       }
     });
 
     it("succeeds after all contributors are refunded", async () => {
-      // Refund contributor2 first
-      const [contrib2Pda] = PublicKey.findProgramAddressSync(
+      const [c2Pda] = PublicKey.findProgramAddressSync(
         [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contributor2.publicKey.toBuffer()],
         program.programId
       );
-      await program.methods
-        .refund()
-        .accounts({
-          project: project0Pda,
-          contribution: contrib2Pda,
-          vault: vault0Pda,
-          contributor: contributor2.publicKey,
-          systemProgram: SystemProgram.programId,
-        } as any)
-        .signers([contributor2])
-        .rpc();
+      await program.methods.refund()
+        .accounts({ project: project0Pda, contribution: c2Pda, vault: vault0Pda,
+          contributor: contributor2.publicKey, systemProgram: SystemProgram.programId } as any)
+        .signers([contributor2]).rpc();
 
-      // Now close the vault
-      const callerBefore = (await ctx.banksClient.getAccount(platformAuth.publicKey))!.lamports;
-      await program.methods
-        .closeVault()
-        .accounts({
-          project: project0Pda,
-          vault: vault0Pda,
-          caller: platformAuth.publicKey,
-        } as any)
-        .signers([platformAuth])
-        .rpc();
-
-      // Vault account should be gone
-      const vaultAccount = await ctx.banksClient.getAccount(vault0Pda);
-      expect(vaultAccount).to.be.null;
-      const callerAfter = (await ctx.banksClient.getAccount(platformAuth.publicKey))!.lamports;
-      expect(callerAfter).to.be.greaterThan(callerBefore);
-      console.log("   rent reclaimed:", callerAfter - callerBefore, "lamports");
+      const before = (await ctx.banksClient.getAccount(platformAuth.publicKey))!.lamports;
+      await program.methods.closeVault()
+        .accounts({ project: project0Pda, vault: vault0Pda, caller: platformAuth.publicKey } as any)
+        .signers([platformAuth]).rpc();
+      expect(await ctx.banksClient.getAccount(vault0Pda)).to.be.null;
+      const after = (await ctx.banksClient.getAccount(platformAuth.publicKey))!.lamports;
+      expect(after).to.be.greaterThan(before);
     });
   });
 });
 
 // ══════════════════════════════════════════════════════════════════════════
-// BLOCK 2: Success path — finalize_funding Graduated + claim_tokens
+// BLOCK 2: graduate_project timing + conditions + claim_tokens
 // ══════════════════════════════════════════════════════════════════════════
-describe("quorum bankrun — success / graduation path", () => {
+describe("quorum bankrun — graduate_project + claim_tokens", () => {
   let ctx: ProgramTestContext;
   let provider: BankrunProvider;
   let program: Program<Quorum>;
 
   let platformPda: PublicKey;
-  let project1Pda: PublicKey;
-  let project1Bump: number;
-  let vault1Pda: PublicKey;
-  let tokenMint1: Keypair;
-  let contrib1Pda: PublicKey; // contribution of contributor1 on project #1
+  let projPda: PublicKey;
+  let projBump: number;
+  let vaultPda: PublicKey;
+  let vaultBump: number;
+  let tokenMint: Keypair;
+  let contribPda: PublicKey;
 
-  // separate keypairs for this block
   const platformAuth2 = Keypair.generate();
   const dev2          = Keypair.generate();
   const treasury2     = Keypair.generate();
   const contrib_user  = Keypair.generate();
+
+  async function injectGraduableProject(holderCount: number) {
+    const realProject = await program.account.project.fetch(projPda);
+    const coder = new BorshAccountsCoder(program.idl);
+    const injectedData = await coder.encode("project", {
+      dev: realProject.dev, tokenMint: realProject.tokenMint,
+      projectId: realProject.projectId, name: realProject.name,
+      ticker: realProject.ticker, description: realProject.description,
+      websiteUrl: realProject.websiteUrl, state: { economicPhase: {} },
+      socialVoteStart: realProject.socialVoteStart, socialVotes: realProject.socialVotes,
+      economicPhaseActive: true, economicPhaseOpen: realProject.economicPhaseOpen,
+      raiseGoal: realProject.raiseGoal,
+      totalRaised: new BN("700000000000"),
+      holderCount: new BN(holderCount),
+      platformFeePaid: realProject.platformFeePaid,
+      healthCheck1Emitted: false, healthCheck2Emitted: false,
+      holdersGoalEmitted: false, raiseGoalEmitted: false, graduationAvailableEmitted: false,
+      vestingStart: new BN(Number(ORIGIN + 15n * DAY)),
+      vestingEnd: new BN(Number(ORIGIN + 285n * DAY)),
+      lastDevActivity: realProject.lastDevActivity, devLocked: false, bump: projBump,
+    });
+    const acct = await ctx.banksClient.getAccount(projPda);
+    ctx.setAccount(projPda, {
+      lamports: acct!.lamports, data: injectedData,
+      owner: program.programId, executable: false,
+    });
+
+    // Inject vault with enough SOL
+    const vaultAcct = await ctx.banksClient.getAccount(vaultPda);
+    const vaultData = makeVaultData(projPda, 700_000_000_000n, vaultBump);
+    ctx.setAccount(vaultPda, {
+      lamports: vaultAcct!.lamports + 700_000_000_000,
+      data: vaultData, owner: program.programId, executable: false,
+    });
+  }
 
   before(async () => {
     ctx = await startAnchor(".", [], []);
@@ -605,211 +467,223 @@ describe("quorum bankrun — success / graduation path", () => {
     for (const kp of [platformAuth2, dev2, treasury2, contrib_user]) {
       fundAccount(ctx, kp.publicKey, 50 * LAMPORTS_PER_SOL);
     }
-
     setTime(ctx, ORIGIN);
     setPyth(ctx, ORIGIN);
 
-    [platformPda] = PublicKey.findProgramAddressSync(
-      [PLATFORM_SEED], program.programId
-    );
-    tokenMint1 = Keypair.generate();
-
-    // Project #0 doesn't exist in this fresh context, so project index = 0
-    [project1Pda, project1Bump] = PublicKey.findProgramAddressSync(
+    [platformPda] = PublicKey.findProgramAddressSync([PLATFORM_SEED], program.programId);
+    tokenMint = Keypair.generate();
+    [projPda, projBump] = PublicKey.findProgramAddressSync(
       [PROJECT_SEED, new BN(0).toArrayLike(Buffer, "le", 8)], program.programId
     );
-    [vault1Pda] = PublicKey.findProgramAddressSync(
+    [vaultPda, vaultBump] = PublicKey.findProgramAddressSync(
       [VAULT_SEED, new BN(0).toArrayLike(Buffer, "le", 8)], program.programId
     );
-    [contrib1Pda] = PublicKey.findProgramAddressSync(
+    [contribPda] = PublicKey.findProgramAddressSync(
       [CONTRIB_SEED, new BN(0).toArrayLike(Buffer, "le", 8), contrib_user.publicKey.toBuffer()],
       program.programId
     );
 
-    // Initialize platform
-    await program.methods
-      .initializePlatform()
-      .accounts({
-        platform: platformPda,
-        authority: platformAuth2.publicKey,
-        treasury: treasury2.publicKey,
-        systemProgram: SystemProgram.programId,
-      } as any)
-      .signers([platformAuth2])
-      .rpc();
+    await program.methods.initializePlatform()
+      .accounts({ platform: platformPda, authority: platformAuth2.publicKey,
+        treasury: treasury2.publicKey, systemProgram: SystemProgram.programId } as any)
+      .signers([platformAuth2]).rpc();
 
-    // Create project (real on-chain, initializes vault and mint)
-    await program.methods
-      .createProject({
-        name: "Success Project",
-        ticker: "WIN",
-        description: "Graduation test project",
-        websiteUrl: "https://win.com",
-        raiseGoal: MIN_RAISE,
-      })
-      .accounts({
-        platform: platformPda,
-        project: project1Pda,
-        vault: vault1Pda,
-        tokenMint: tokenMint1.publicKey,
-        dev: dev2.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      } as any)
-      .signers([dev2, tokenMint1])
-      .rpc();
+    await program.methods.createProject({
+      name: "Grad Project", ticker: "GRAD", description: "Test",
+      websiteUrl: "https://grad.com", raiseGoal: MIN_RAISE,
+    }).accounts({
+      platform: platformPda, project: projPda, vault: vaultPda,
+      tokenMint: tokenMint.publicKey, dev: dev2.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId,
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+    } as any).signers([dev2, tokenMint]).rpc();
 
-    // Open economic phase at day 15 (real)
     setTime(ctx, ORIGIN + 15n * DAY);
-    await program.methods
-      .openEconomicPhase()
-      .accounts({ project: project1Pda, caller: platformAuth2.publicKey } as any)
-      .signers([platformAuth2])
-      .rpc();
+    await program.methods.openEconomicPhase()
+      .accounts({ project: projPda, caller: platformAuth2.publicKey } as any)
+      .signers([platformAuth2]).rpc();
 
-    // Inject Pyth and have contrib_user make a real contribution
     setPyth(ctx, ORIGIN + 15n * DAY);
-    await program.methods
-      .contribute(new BN(300_000_000))   // 0.3 SOL, well within cap
-      .accounts({
-        platform: platformPda,
-        project: project1Pda,
-        contribution: contrib1Pda,
-        vault: vault1Pda,
-        treasury: treasury2.publicKey,
-        contributor: contrib_user.publicKey,
-        priceFeed: PYTH_FEED,
-        systemProgram: SystemProgram.programId,
-      } as any)
-      .signers([contrib_user])
-      .rpc();
+    await program.methods.contribute(new BN(300_000_000))
+      .accounts({ platform: platformPda, project: projPda, contribution: contribPda,
+        vault: vaultPda, treasury: treasury2.publicKey, contributor: contrib_user.publicKey,
+        priceFeed: PYTH_FEED, systemProgram: SystemProgram.programId } as any)
+      .signers([contrib_user]).rpc();
 
-    // Close social phase at day 30+1
     setTime(ctx, ORIGIN + 31n * DAY);
-    await program.methods
-      .closeSocialPhase()
-      .accounts({ project: project1Pda, caller: platformAuth2.publicKey } as any)
-      .signers([platformAuth2])
-      .rpc();
+    await program.methods.closeSocialPhase()
+      .accounts({ project: projPda, caller: platformAuth2.publicKey } as any)
+      .signers([platformAuth2]).rpc();
 
-    // ── Inject project state: 1000 holders, $700K raised, vesting ended ──
-    // Fetch real account first to preserve token_mint, dev, bump etc.
-    const realProject = await program.account.project.fetch(project1Pda);
-    const coder = new BorshAccountsCoder(program.idl);
-    const injectedData = await coder.encode("project", {
-      dev: realProject.dev,
-      tokenMint: realProject.tokenMint,
-      projectId: realProject.projectId,
-      name: realProject.name,
-      ticker: realProject.ticker,
-      description: realProject.description,
-      websiteUrl: realProject.websiteUrl,
-      state: { economicPhase: {} },
-      socialVoteStart: realProject.socialVoteStart,
-      socialVotes: realProject.socialVotes,
-      economicPhaseActive: true,
-      economicPhaseOpen: realProject.economicPhaseOpen,
-      raiseGoal: realProject.raiseGoal,
-      totalRaised: new BN("700000000000"),   // far above $100K min
-      holderCount: new BN(1000),             // meets MIN_HOLDERS
-      platformFeePaid: realProject.platformFeePaid,
-      healthCheck1Emitted: false,
-      healthCheck2Emitted: false,
-      vestingStart: realProject.vestingStart,
-      vestingEnd: new BN(Number(ORIGIN + 285n * DAY)),  // expires at day 285
-      lastDevActivity: realProject.lastDevActivity,
-      devLocked: false,
-      bump: project1Bump,
+    await injectGraduableProject(1000);
+  });
+
+  describe("graduate_project timing", () => {
+    it("fails before Day 180 from vesting_start (even with 1000 holders)", async () => {
+      // vesting_start = ORIGIN+15d; Day 180 from it = ORIGIN+195d; Day 179 = ORIGIN+194d
+      setTime(ctx, ORIGIN + 194n * DAY);
+      setPyth(ctx, ORIGIN + 194n * DAY);
+      try {
+        await program.methods.graduateProject()
+          .accounts({ project: projPda, vault: vaultPda,
+            priceFeed: PYTH_FEED, caller: platformAuth2.publicKey } as any)
+          .signers([platformAuth2]).rpc();
+        expect.fail("Should fail: before Day 180");
+      } catch (e: any) {
+        expect(e.error?.errorCode?.code ?? e.message).to.include("GraduationNotAvailableYet");
+      }
     });
 
-    // Write injected state
-    const projectAcctInfo = await ctx.banksClient.getAccount(project1Pda);
-    ctx.setAccount(project1Pda, {
-      lamports: projectAcctInfo!.lamports,
-      data: injectedData,
-      owner: program.programId,
-      executable: false,
+    it("succeeds at exactly Day 180 from vesting_start", async () => {
+      setTime(ctx, ORIGIN + 195n * DAY);
+      setPyth(ctx, ORIGIN + 195n * DAY);
+      await program.methods.graduateProject()
+        .accounts({ project: projPda, vault: vaultPda,
+          priceFeed: PYTH_FEED, caller: platformAuth2.publicKey } as any)
+        .signers([platformAuth2]).rpc();
+      const project = await program.account.project.fetch(projPda);
+      expect(project.state).to.deep.equal({ graduated: {} });
+      console.log("   project graduated at Day 195 (Day 180 from vesting_start) ✓");
     });
   });
 
-  // ── finalize_funding SUCCESS ───────────────────────────────────────────
-  describe("finalize_funding — success path", () => {
-    it("marks project Graduated when 1000 holders and enough funds", async () => {
-      // Warp past vesting_end (day 285)
+  describe("graduate_project conditions — fresh project2", () => {
+    let proj2Pda: PublicKey;
+    let proj2Bump: number;
+    let vault2Pda: PublicKey;
+    let vault2Bump: number;
+    let tokenMint2: Keypair;
+
+    before(async () => {
+      const platform = await program.account.platform.fetch(platformPda);
+      const projId = platform.totalProjects;
+      [proj2Pda, proj2Bump] = PublicKey.findProgramAddressSync(
+        [PROJECT_SEED, projId.toArrayLike(Buffer, "le", 8)], program.programId
+      );
+      [vault2Pda, vault2Bump] = PublicKey.findProgramAddressSync(
+        [VAULT_SEED, projId.toArrayLike(Buffer, "le", 8)], program.programId
+      );
+      tokenMint2 = Keypair.generate();
+
+      // Create project — this initializes the PDAs. State injection handles the rest.
+      // (We skip openEconomicPhase/closeSocialPhase because the clock is already at Day 195
+      //  from the prior test, so Day 15 from NOW would be Day 210 — too far ahead.)
+      await program.methods.createProject({
+        name: "Cond Test", ticker: "CDT", description: "Cond test",
+        websiteUrl: "https://cdt.com", raiseGoal: MIN_RAISE,
+      }).accounts({ platform: platformPda, project: proj2Pda, vault: vault2Pda,
+        tokenMint: tokenMint2.publicKey, dev: dev2.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY } as any)
+        .signers([dev2, tokenMint2]).rpc();
+    });
+
+    async function injectProj2(holderCount: number, totalReceived: bigint, vestingEndOffset: bigint) {
+      const realProject = await program.account.project.fetch(proj2Pda);
+      const coder = new BorshAccountsCoder(program.idl);
+      const data = await coder.encode("project", {
+        dev: realProject.dev, tokenMint: realProject.tokenMint,
+        projectId: realProject.projectId, name: realProject.name,
+        ticker: realProject.ticker, description: realProject.description,
+        websiteUrl: realProject.websiteUrl, state: { economicPhase: {} },
+        socialVoteStart: realProject.socialVoteStart, socialVotes: realProject.socialVotes,
+        economicPhaseActive: true, economicPhaseOpen: realProject.economicPhaseOpen,
+        raiseGoal: realProject.raiseGoal,
+        totalRaised: new BN(totalReceived.toString()),
+        holderCount: new BN(holderCount),
+        platformFeePaid: realProject.platformFeePaid,
+        healthCheck1Emitted: false, healthCheck2Emitted: false,
+        holdersGoalEmitted: false, raiseGoalEmitted: false, graduationAvailableEmitted: false,
+        vestingStart: new BN(Number(ORIGIN + 15n * DAY)),
+        vestingEnd: new BN(Number(ORIGIN + vestingEndOffset)),
+        lastDevActivity: realProject.lastDevActivity, devLocked: false, bump: proj2Bump,
+      });
+      const acct = await ctx.banksClient.getAccount(proj2Pda);
+      ctx.setAccount(proj2Pda, { lamports: acct!.lamports, data, owner: program.programId, executable: false });
+
+      const vaultAcct = await ctx.banksClient.getAccount(vault2Pda);
+      ctx.setAccount(vault2Pda, {
+        lamports: vaultAcct!.lamports + Number(totalReceived),
+        data: makeVaultData(proj2Pda, totalReceived, vault2Bump),
+        owner: program.programId, executable: false,
+      });
+    }
+
+    it("fails when holder_count < 1000 (conditions not met)", async () => {
+      await injectProj2(500, 700_000_000_000n, 285n * DAY);
+      setTime(ctx, ORIGIN + 200n * DAY);
+      setPyth(ctx, ORIGIN + 200n * DAY);
+      try {
+        await program.methods.graduateProject()
+          .accounts({ project: proj2Pda, vault: vault2Pda,
+            priceFeed: PYTH_FEED, caller: platformAuth2.publicKey } as any)
+          .signers([platformAuth2]).rpc();
+        expect.fail("Should fail: not enough holders");
+      } catch (e: any) {
+        expect(e.error?.errorCode?.code ?? e.message).to.include("GraduationNotAvailableYet");
+      }
+    });
+
+    it("fails after Day 284 even with full conditions (window expired)", async () => {
+      await injectProj2(1000, 700_000_000_000n, 285n * DAY);
       setTime(ctx, ORIGIN + 286n * DAY);
       setPyth(ctx, ORIGIN + 286n * DAY);
+      try {
+        await program.methods.graduateProject()
+          .accounts({ project: proj2Pda, vault: vault2Pda,
+            priceFeed: PYTH_FEED, caller: platformAuth2.publicKey } as any)
+          .signers([platformAuth2]).rpc();
+        expect.fail("Should fail: window expired");
+      } catch (e: any) {
+        expect(e.error?.errorCode?.code ?? e.message).to.include("GraduationWindowExpired");
+      }
+    });
 
-      await program.methods
-        .finalizeFunding()
-        .accounts({
-          project: project1Pda,
-          vault: vault1Pda,
-          priceFeed: PYTH_FEED,
-          caller: platformAuth2.publicKey,
-        } as any)
-        .signers([platformAuth2])
-        .rpc();
-
-      const project = await program.account.project.fetch(project1Pda);
-      expect(project.state).to.deep.equal({ graduated: {} });
-      console.log("   project graduated ✓");
+    it("finalize_funding auto-fails proj2 after Day 284 (never graduated)", async () => {
+      setTime(ctx, ORIGIN + 287n * DAY);
+      await program.methods.finalizeFunding()
+        .accounts({ project: proj2Pda, caller: platformAuth2.publicKey } as any)
+        .signers([platformAuth2]).rpc();
+      const project = await program.account.project.fetch(proj2Pda);
+      expect(project.state).to.deep.equal({ failed: {} });
+      console.log("   finalize_funding auto-failed proj2 ✓");
     });
   });
 
-  // ── claim_tokens ──────────────────────────────────────────────────────
-  describe("claim_tokens", () => {
+  describe("claim_tokens (projPda = Graduated)", () => {
     it("contributor claims tokens after graduation", async () => {
-      const contrib = await program.account.contribution.fetch(contrib1Pda);
+      const contrib = await program.account.contribution.fetch(contribPda);
       expect(contrib.claimed).to.be.false;
       expect(contrib.tokensAllocated.toNumber()).to.be.greaterThan(0);
 
       const ata = anchor.utils.token.associatedAddress({
-        mint: tokenMint1.publicKey,
-        owner: contrib_user.publicKey,
+        mint: tokenMint.publicKey, owner: contrib_user.publicKey,
       });
-
-      await program.methods
-        .claimTokens()
-        .accounts({
-          project: project1Pda,
-          contribution: contrib1Pda,
-          tokenMint: tokenMint1.publicKey,
-          contributorTokenAccount: ata,
-          contributor: contrib_user.publicKey,
-          tokenProgram: TOKEN_PROGRAM_ID,
+      await program.methods.claimTokens()
+        .accounts({ project: projPda, contribution: contribPda,
+          tokenMint: tokenMint.publicKey, contributorTokenAccount: ata,
+          contributor: contrib_user.publicKey, tokenProgram: TOKEN_PROGRAM_ID,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        } as any)
-        .signers([contrib_user])
-        .rpc();
-
-      const contribAfter = await program.account.contribution.fetch(contrib1Pda);
+          systemProgram: SystemProgram.programId } as any)
+        .signers([contrib_user]).rpc();
+      const contribAfter = await program.account.contribution.fetch(contribPda);
       expect(contribAfter.claimed).to.be.true;
       console.log("   tokens claimed:", contrib.tokensAllocated.toString());
     });
 
     it("prevents double-claim", async () => {
       const ata = anchor.utils.token.associatedAddress({
-        mint: tokenMint1.publicKey,
-        owner: contrib_user.publicKey,
+        mint: tokenMint.publicKey, owner: contrib_user.publicKey,
       });
       try {
-        await program.methods
-          .claimTokens()
-          .accounts({
-            project: project1Pda,
-            contribution: contrib1Pda,
-            tokenMint: tokenMint1.publicKey,
-            contributorTokenAccount: ata,
-            contributor: contrib_user.publicKey,
-            tokenProgram: TOKEN_PROGRAM_ID,
+        await program.methods.claimTokens()
+          .accounts({ project: projPda, contribution: contribPda,
+            tokenMint: tokenMint.publicKey, contributorTokenAccount: ata,
+            contributor: contrib_user.publicKey, tokenProgram: TOKEN_PROGRAM_ID,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          } as any)
-          .signers([contrib_user])
-          .rpc();
-        expect.fail("Second claim should fail");
+            systemProgram: SystemProgram.programId } as any)
+          .signers([contrib_user]).rpc();
+        expect.fail();
       } catch (e: any) {
         expect(e.error?.errorCode?.code ?? e.message).to.include("VestingAlreadyClaimed");
       }

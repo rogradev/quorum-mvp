@@ -3,6 +3,7 @@ pub mod create_project;
 pub mod social_vote;
 pub mod contribute;
 pub mod finalize_funding;
+pub mod graduate_project;
 pub mod refund;
 pub mod dev_activity;
 pub mod claim_tokens;

@@ -103,4 +103,11 @@ pub enum QuorumError {
 
     #[msg("El precio de SOL está fuera del rango permitido ($1–$10,000)")]
     PriceOutOfRange,
+
+    // ── Graduación ───────────────────────────────────────────────
+    #[msg("Graduación no disponible aún (antes del Día 180 desde apertura económica, o condiciones no cumplidas)")]
+    GraduationNotAvailableYet,
+
+    #[msg("La ventana de graduación expiró (después del Día 284) — usa finalize_funding")]
+    GraduationWindowExpired,
 }

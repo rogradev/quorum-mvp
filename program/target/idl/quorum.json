@@ -423,6 +423,9 @@
           }
         },
         {
+          "name": "price_feed"
+        },
+        {
           "name": "caller",
           "signer": true
         }
@@ -440,6 +443,51 @@
         224,
         149,
         90
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "graduate_project",
+      "discriminator": [
+        139,
+        31,
+        196,
+        69,
+        35,
+        71,
+        19,
+        149
       ],
       "accounts": [
         {
@@ -1091,19 +1139,6 @@
       ]
     },
     {
-      "name": "FundingSucceeded",
-      "discriminator": [
-        52,
-        35,
-        156,
-        31,
-        18,
-        233,
-        47,
-        13
-      ]
-    },
-    {
       "name": "HealthCheckEmitted",
       "discriminator": [
         174,
@@ -1192,6 +1227,58 @@
         136,
         200,
         91
+      ]
+    },
+    {
+      "name": "GraduationCompleted",
+      "discriminator": [
+        194,
+        201,
+        196,
+        1,
+        19,
+        204,
+        8,
+        1
+      ]
+    },
+    {
+      "name": "HoldersGoalReached",
+      "discriminator": [
+        126,
+        58,
+        186,
+        10,
+        117,
+        248,
+        38,
+        2
+      ]
+    },
+    {
+      "name": "RaiseGoalReached",
+      "discriminator": [
+        214,
+        17,
+        239,
+        140,
+        151,
+        185,
+        85,
+        134
+      ]
+    },
+    {
+      "name": "GraduationAvailable",
+      "discriminator": [
+        139,
+        237,
+        204,
+        69,
+        1,
+        7,
+        143,
+        112
       ]
     }
   ],
@@ -1350,6 +1437,16 @@
       "code": 6030,
       "name": "PriceOutOfRange",
       "msg": "El precio de SOL está fuera del rango permitido ($1–$10,000)"
+    },
+    {
+      "code": 6031,
+      "name": "GraduationNotAvailableYet",
+      "msg": "Graduación no disponible aún (antes del Día 180 desde apertura económica, o condiciones no cumplidas)"
+    },
+    {
+      "code": 6032,
+      "name": "GraduationWindowExpired",
+      "msg": "La ventana de graduación expiró (después del Día 284) — usa finalize_funding"
     }
   ],
   "types": [
@@ -1585,52 +1682,8 @@
             "type": "u64"
           },
           {
-            "name": "holders_ok",
-            "type": "bool"
-          },
-          {
-            "name": "min_raise_ok",
-            "type": "bool"
-          },
-          {
-            "name": "goal_ok",
-            "type": "bool"
-          },
-          {
             "name": "failed_at",
             "type": "i64"
-          },
-          {
-            "name": "sol_price_usd",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "FundingSucceeded",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "total_raised",
-            "type": "u64"
-          },
-          {
-            "name": "holder_count",
-            "type": "u64"
-          },
-          {
-            "name": "graduated_at",
-            "type": "i64"
-          },
-          {
-            "name": "sol_price_usd",
-            "type": "u64"
           }
         ]
       }
@@ -1859,6 +1912,18 @@
             "type": "bool"
           },
           {
+            "name": "holders_goal_emitted",
+            "type": "bool"
+          },
+          {
+            "name": "raise_goal_emitted",
+            "type": "bool"
+          },
+          {
+            "name": "graduation_available_emitted",
+            "type": "bool"
+          },
+          {
             "name": "vesting_start",
             "docs": [
               "Timestamp en que empieza el vesting (= economic_phase_open)"
@@ -1941,9 +2006,6 @@
           },
           {
             "name": "EconomicPhase"
-          },
-          {
-            "name": "Vesting"
           },
           {
             "name": "Failed"
@@ -2151,6 +2213,110 @@
           {
             "name": "tokens_minted",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GraduationCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "holder_count",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
+          },
+          {
+            "name": "graduated_at",
+            "type": "i64"
+          },
+          {
+            "name": "days_elapsed",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HoldersGoalReached",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "holder_count",
+            "type": "u64"
+          },
+          {
+            "name": "reached_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaiseGoalReached",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
+          },
+          {
+            "name": "reached_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GraduationAvailable",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "holder_count",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
+          },
+          {
+            "name": "available_at",
+            "type": "i64"
           }
         ]
       }

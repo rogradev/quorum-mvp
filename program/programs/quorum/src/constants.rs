@@ -65,6 +65,9 @@ pub const VAULT_SEED: &[u8] = b"vault";
 /// Días de inactividad del dev antes de alerta pública (30 días)
 pub const INACTIVITY_ALERT_SECS: i64 = 30 * 24 * 60 * 60;
 
+/// Mínimo de días desde apertura económica antes de poder graduarse (180 días)
+pub const GRADUATION_MIN_SECS: i64 = 180 * 24 * 60 * 60;
+
 // ── Pyth oracle ────────────────────────────────────────────────
 /// Edad máxima del precio Pyth aceptada (60 segundos)
 pub const MAX_PRICE_AGE_SECS: u64 = 60;
