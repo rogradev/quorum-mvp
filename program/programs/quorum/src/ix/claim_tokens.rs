@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
-use crate::state::{Project, ProjectState, Contribution};
+use anchor_spl::token::{self, MintTo};
+use crate::state::ProjectState;
 use crate::constants::*;
 use crate::errors::QuorumError;
 

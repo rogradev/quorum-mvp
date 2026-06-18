@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::{Project, ProjectState, Contribution, VaultAccount};
-use crate::constants::*;
+use crate::state::ProjectState;
 use crate::errors::QuorumError;
 
 /// Reembolsa al holder si el proyecto falló.

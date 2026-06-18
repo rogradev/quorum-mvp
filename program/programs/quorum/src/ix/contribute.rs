@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
-use crate::state::{Platform, Project, Contribution, VaultAccount};
 use crate::constants::*;
 use crate::errors::QuorumError;
 use crate::utils::price;

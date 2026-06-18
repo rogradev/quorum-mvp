@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
-use crate::state::{Platform, Project, ProjectState, VaultAccount};
+use crate::state::{Platform, Project, ProjectState};
 use crate::constants::*;
 use crate::errors::QuorumError;
 

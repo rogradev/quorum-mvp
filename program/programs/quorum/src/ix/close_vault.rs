@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::{Project, ProjectState, VaultAccount};
-use crate::constants::*;
+use crate::state::ProjectState;
 use crate::errors::QuorumError;
 
 /// Cierra el VaultAccount de un proyecto fallido una vez que todos los
