@@ -21,10 +21,12 @@ describe("quorum", () => {
   // PDAs
   let platformPda: PublicKey;
   let projectPda: PublicKey;
+  let vaultPda: PublicKey;
   let tokenMint: Keypair;
 
   const PLATFORM_SEED = Buffer.from("platform");
   const PROJECT_SEED = Buffer.from("project");
+  const VAULT_SEED = Buffer.from("vault");
 
   before(async () => {
     // Airdrop SOL a wallets de prueba
@@ -74,7 +76,12 @@ describe("quorum", () => {
       program.programId
     );
 
-    const raiseGoal = new anchor.BN(666_666_667); // ~$100 USD en lamports
+    [vaultPda] = PublicKey.findProgramAddressSync(
+      [VAULT_SEED, projectId.toArrayLike(Buffer, "le", 8)],
+      program.programId
+    );
+
+    const raiseGoal = new anchor.BN("666666667000"); // ~$100,000 USD en lamports (mínimo)
 
     await program.methods
       .createProject({
@@ -87,6 +94,7 @@ describe("quorum", () => {
       .accounts({
         platform: platformPda,
         project: projectPda,
+        vault: vaultPda,
         tokenMint: tokenMint.publicKey,
         dev: dev.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,

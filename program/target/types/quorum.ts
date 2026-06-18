@@ -14,7 +14,7 @@ export type Quorum = {
   },
   "instructions": [
     {
-      "name": "castSocialVote",
+      "name": "cast_social_vote",
       "discriminator": [
         116,
         205,
@@ -45,14 +45,14 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
           }
         },
         {
-          "name": "socialVote",
+          "name": "social_vote",
           "writable": true,
           "pda": {
             "seeds": [
@@ -67,7 +67,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               },
               {
@@ -83,14 +83,14 @@ export type Quorum = {
           "signer": true
         },
         {
-          "name": "systemProgram",
+          "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "closeSocialPhase",
+      "name": "close_social_phase",
       "discriminator": [
         99,
         35,
@@ -121,7 +121,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -187,7 +187,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -217,7 +217,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               },
               {
@@ -228,7 +228,7 @@ export type Quorum = {
           }
         },
         {
-          "name": "projectVault",
+          "name": "vault",
           "writable": true,
           "pda": {
             "seeds": [
@@ -244,7 +244,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -260,19 +260,22 @@ export type Quorum = {
           "signer": true
         },
         {
-          "name": "systemProgram",
+          "name": "price_feed"
+        },
+        {
+          "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "amountLamports",
+          "name": "amount_lamports",
           "type": "u64"
         }
       ]
     },
     {
-      "name": "createProject",
+      "name": "create_project",
       "discriminator": [
         148,
         219,
@@ -324,14 +327,37 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "platform.total_projects",
+                "path": "platform.totalProjects",
                 "account": "platform"
               }
             ]
           }
         },
         {
-          "name": "tokenMint",
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "platform.totalProjects",
+                "account": "platform"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
           "writable": true,
           "signer": true
         },
@@ -341,11 +367,11 @@ export type Quorum = {
           "signer": true
         },
         {
-          "name": "tokenProgram",
+          "name": "token_program",
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         },
         {
-          "name": "systemProgram",
+          "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
         {
@@ -358,14 +384,14 @@ export type Quorum = {
           "name": "params",
           "type": {
             "defined": {
-              "name": "createProjectParams"
+              "name": "CreateProjectParams"
             }
           }
         }
       ]
     },
     {
-      "name": "emitHealthCheck",
+      "name": "emit_health_check",
       "discriminator": [
         185,
         42,
@@ -396,7 +422,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -410,7 +436,7 @@ export type Quorum = {
       "args": []
     },
     {
-      "name": "finalizeFunding",
+      "name": "finalize_funding",
       "discriminator": [
         129,
         81,
@@ -441,11 +467,36 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
           }
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.projectId",
+                "account": "project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "price_feed"
         },
         {
           "name": "caller",
@@ -455,7 +506,7 @@ export type Quorum = {
       "args": []
     },
     {
-      "name": "initializePlatform",
+      "name": "initialize_platform",
       "discriminator": [
         119,
         201,
@@ -497,14 +548,14 @@ export type Quorum = {
           "name": "treasury"
         },
         {
-          "name": "systemProgram",
+          "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "openEconomicPhase",
+      "name": "open_economic_phase",
       "discriminator": [
         104,
         154,
@@ -535,7 +586,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -579,7 +630,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -609,7 +660,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               },
               {
@@ -620,7 +671,7 @@ export type Quorum = {
           }
         },
         {
-          "name": "projectVault",
+          "name": "vault",
           "writable": true,
           "pda": {
             "seeds": [
@@ -636,7 +687,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -648,14 +699,14 @@ export type Quorum = {
           "signer": true
         },
         {
-          "name": "systemProgram",
+          "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "registerDevActivity",
+      "name": "register_dev_activity",
       "discriminator": [
         104,
         13,
@@ -686,7 +737,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -700,7 +751,7 @@ export type Quorum = {
       "args": []
     },
     {
-      "name": "triggerInactivity",
+      "name": "trigger_inactivity",
       "discriminator": [
         126,
         106,
@@ -731,7 +782,7 @@ export type Quorum = {
               },
               {
                 "kind": "account",
-                "path": "project.project_id",
+                "path": "project.projectId",
                 "account": "project"
               }
             ]
@@ -743,11 +794,178 @@ export type Quorum = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "close_vault",
+      "discriminator": [
+        141,
+        103,
+        17,
+        126,
+        72,
+        75,
+        29,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.projectId",
+                "account": "project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.projectId",
+                "account": "project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_tokens",
+      "discriminator": [
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.projectId",
+                "account": "project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "contribution",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.projectId",
+                "account": "project"
+              },
+              {
+                "kind": "account",
+                "path": "contributor"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true
+        },
+        {
+          "name": "contributor_token_account",
+          "writable": true
+        },
+        {
+          "name": "contributor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe1bC8"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
     {
-      "name": "contribution",
+      "name": "Contribution",
       "discriminator": [
         182,
         187,
@@ -760,7 +978,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "platform",
+      "name": "Platform",
       "discriminator": [
         77,
         92,
@@ -773,7 +991,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "project",
+      "name": "Project",
       "discriminator": [
         205,
         168,
@@ -786,7 +1004,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "socialVote",
+      "name": "SocialVote",
       "discriminator": [
         86,
         111,
@@ -797,11 +1015,24 @@ export type Quorum = {
         73,
         33
       ]
+    },
+    {
+      "name": "VaultAccount",
+      "discriminator": [
+        230,
+        251,
+        241,
+        83,
+        139,
+        202,
+        93,
+        28
+      ]
     }
   ],
   "events": [
     {
-      "name": "contributionMade",
+      "name": "ContributionMade",
       "discriminator": [
         81,
         218,
@@ -814,7 +1045,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "devActivityRegistered",
+      "name": "DevActivityRegistered",
       "discriminator": [
         146,
         166,
@@ -827,7 +1058,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "devLocked",
+      "name": "DevLocked",
       "discriminator": [
         151,
         208,
@@ -840,7 +1071,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "economicPhaseOpened",
+      "name": "EconomicPhaseOpened",
       "discriminator": [
         224,
         234,
@@ -853,7 +1084,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "fundingFailed",
+      "name": "FundingFailed",
       "discriminator": [
         157,
         28,
@@ -866,7 +1097,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "fundingSucceeded",
+      "name": "FundingSucceeded",
       "discriminator": [
         52,
         35,
@@ -879,7 +1110,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "healthCheckEmitted",
+      "name": "HealthCheckEmitted",
       "discriminator": [
         174,
         200,
@@ -892,7 +1123,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "projectCreated",
+      "name": "ProjectCreated",
       "discriminator": [
         192,
         10,
@@ -905,20 +1136,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "refundIssued",
-      "discriminator": [
-        249,
-        16,
-        159,
-        159,
-        93,
-        186,
-        145,
-        206
-      ]
-    },
-    {
-      "name": "socialPhaseClosed",
+      "name": "SocialPhaseClosed",
       "discriminator": [
         201,
         198,
@@ -931,7 +1149,7 @@ export type Quorum = {
       ]
     },
     {
-      "name": "socialVoteCast",
+      "name": "SocialVoteCast",
       "discriminator": [
         86,
         85,
@@ -942,138 +1160,207 @@ export type Quorum = {
         5,
         119
       ]
+    },
+    {
+      "name": "RefundProcessed",
+      "discriminator": [
+        203,
+        88,
+        236,
+        233,
+        192,
+        178,
+        57,
+        161
+      ]
+    },
+    {
+      "name": "VaultClosed",
+      "discriminator": [
+        238,
+        129,
+        38,
+        228,
+        227,
+        118,
+        249,
+        215
+      ]
+    },
+    {
+      "name": "TokensClaimed",
+      "discriminator": [
+        25,
+        128,
+        244,
+        55,
+        241,
+        136,
+        200,
+        91
+      ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "emptyName",
+      "name": "EmptyName",
       "msg": "El nombre del proyecto no puede estar vacío"
     },
     {
       "code": 6001,
-      "name": "emptyTicker",
+      "name": "EmptyTicker",
       "msg": "El ticker no puede estar vacío"
     },
     {
       "code": 6002,
-      "name": "emptyDescription",
+      "name": "EmptyDescription",
       "msg": "La descripción no puede estar vacía"
     },
     {
       "code": 6003,
-      "name": "raiseTooLow",
+      "name": "RaiseTooLow",
       "msg": "La meta de recaudación es demasiado baja (mínimo $100,000 USD equivalente)"
     },
     {
       "code": 6004,
-      "name": "socialVoteNotActive",
+      "name": "SocialVoteNotActive",
       "msg": "La fase de votación social no está activa"
     },
     {
       "code": 6005,
-      "name": "alreadyVoted",
+      "name": "AlreadyVoted",
       "msg": "Ya votaste en este proyecto"
     },
     {
       "code": 6006,
-      "name": "socialVoteNotEnded",
+      "name": "SocialVoteNotEnded",
       "msg": "La fase de votación social no ha terminado"
     },
     {
       "code": 6007,
-      "name": "economicPhaseNotActive",
+      "name": "EconomicPhaseNotActive",
       "msg": "La fase económica no está activa"
     },
     {
       "code": 6008,
-      "name": "economicPhaseNotEnded",
+      "name": "EconomicPhaseNotEnded",
       "msg": "La fase económica no ha terminado"
     },
     {
       "code": 6009,
-      "name": "contributionTooLow",
+      "name": "ContributionTooLow",
       "msg": "La contribución mínima es $1 USD equivalente"
     },
     {
       "code": 6010,
-      "name": "exceedsHolderLimit",
+      "name": "ExceedsHolderLimit",
       "msg": "Esta contribución excede el límite de 0.1% del supply por holder"
     },
     {
       "code": 6011,
-      "name": "alreadyContributed",
+      "name": "AlreadyContributed",
       "msg": "Ya contribuiste en este proyecto"
     },
     {
       "code": 6012,
-      "name": "notEnoughHolders",
+      "name": "NotEnoughHolders",
       "msg": "El proyecto no alcanzó el mínimo de holders requeridos (1,000)"
     },
     {
       "code": 6013,
-      "name": "notEnoughFunds",
+      "name": "NotEnoughFunds",
       "msg": "El proyecto no alcanzó la meta de recaudación mínima"
     },
     {
       "code": 6014,
-      "name": "alreadyFinalized",
+      "name": "AlreadyFinalized",
       "msg": "El proyecto ya fue finalizado"
     },
     {
       "code": 6015,
-      "name": "notFinalized",
+      "name": "NotFinalized",
       "msg": "El proyecto aún no fue finalizado"
     },
     {
       "code": 6016,
-      "name": "vestingNotComplete",
+      "name": "VestingNotComplete",
       "msg": "El vesting aún no ha terminado"
     },
     {
       "code": 6017,
-      "name": "vestingAlreadyClaimed",
+      "name": "VestingAlreadyClaimed",
       "msg": "El vesting ya fue reclamado"
     },
     {
       "code": 6018,
-      "name": "nothingToRefund",
+      "name": "NothingToRefund",
       "msg": "No hay fondos para reembolsar"
     },
     {
       "code": 6019,
-      "name": "projectSucceeded",
+      "name": "ProjectSucceeded",
       "msg": "El proyecto fue exitoso, no hay reembolso disponible"
     },
     {
       "code": 6020,
-      "name": "unauthorizedActivityUpdate",
+      "name": "UnauthorizedActivityUpdate",
       "msg": "Solo el dev puede registrar actividad"
     },
     {
       "code": 6021,
-      "name": "devLocked",
+      "name": "DevLocked",
       "msg": "El dev está bloqueado por inactividad"
     },
     {
       "code": 6022,
-      "name": "arithmeticOverflow",
+      "name": "ArithmeticOverflow",
       "msg": "Overflow aritmético"
     },
     {
       "code": 6023,
-      "name": "invalidProjectState",
+      "name": "InvalidProjectState",
       "msg": "El proyecto no existe en el estado esperado"
     },
     {
       "code": 6024,
-      "name": "unauthorized",
+      "name": "Unauthorized",
       "msg": "Solo el administrador de la plataforma puede ejecutar esto"
+    },
+    {
+      "code": 6025,
+      "name": "VaultProjectMismatch",
+      "msg": "El vault no pertenece a este proyecto"
+    },
+    {
+      "code": 6026,
+      "name": "VaultNotFullyRefunded",
+      "msg": "Quedan reembolsos pendientes — el vault no se puede cerrar todavía"
+    },
+    {
+      "code": 6027,
+      "name": "InsufficientVaultBalance",
+      "msg": "El vault no tiene saldo suficiente para cubrir el reembolso"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidPriceFeed",
+      "msg": "La cuenta del price feed de Pyth no es válida"
+    },
+    {
+      "code": 6029,
+      "name": "StalePriceFeed",
+      "msg": "El precio de Pyth está desactualizado (más de 60 segundos)"
+    },
+    {
+      "code": 6030,
+      "name": "PriceOutOfRange",
+      "msg": "El precio de SOL está fuera del rango permitido ($1–$10,000)"
     }
   ],
   "types": [
     {
-      "name": "contribution",
+      "name": "Contribution",
       "docs": [
         "Registra la contribución de un holder en un proyecto específico.",
         "PDA derivada de [CONTRIBUTION_SEED, project_id, contributor_pubkey]"
@@ -1082,7 +1369,7 @@ export type Quorum = {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "docs": [
               "Proyecto al que pertenece"
             ],
@@ -1096,14 +1383,14 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "amountLamports",
+            "name": "amount_lamports",
             "docs": [
               "Cantidad aportada en lamports"
             ],
             "type": "u64"
           },
           {
-            "name": "tokensAllocated",
+            "name": "tokens_allocated",
             "docs": [
               "Tokens asignados en proporción al aporte"
             ],
@@ -1124,9 +1411,23 @@ export type Quorum = {
             "type": "bool"
           },
           {
-            "name": "contributedAt",
+            "name": "contributed_at",
             "docs": [
               "Timestamp de la contribución"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "sol_price_at_contribution",
+            "docs": [
+              "Precio de SOL en USD al momento de la contribución"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "refunded_at",
+            "docs": [
+              "Timestamp del reembolso (0 si no ha sido reembolsado)"
             ],
             "type": "i64"
           },
@@ -1141,12 +1442,12 @@ export type Quorum = {
       }
     },
     {
-      "name": "contributionMade",
+      "name": "ContributionMade",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
@@ -1154,30 +1455,34 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "amountLamports",
+            "name": "amount_lamports",
             "type": "u64"
           },
           {
-            "name": "tokensAllocated",
+            "name": "tokens_allocated",
             "type": "u64"
           },
           {
-            "name": "totalRaised",
+            "name": "total_raised",
             "type": "u64"
           },
           {
-            "name": "holderCount",
+            "name": "holder_count",
             "type": "u64"
           },
           {
-            "name": "platformFee",
+            "name": "platform_fee",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "createProjectParams",
+      "name": "CreateProjectParams",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1194,23 +1499,23 @@ export type Quorum = {
             "type": "string"
           },
           {
-            "name": "websiteUrl",
+            "name": "website_url",
             "type": "string"
           },
           {
-            "name": "raiseGoal",
+            "name": "raise_goal",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "devActivityRegistered",
+      "name": "DevActivityRegistered",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
@@ -1225,12 +1530,12 @@ export type Quorum = {
       }
     },
     {
-      "name": "devLocked",
+      "name": "DevLocked",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
@@ -1238,134 +1543,142 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "inactiveForDays",
+            "name": "inactive_for_days",
             "type": "i64"
           }
         ]
       }
     },
     {
-      "name": "economicPhaseOpened",
+      "name": "EconomicPhaseOpened",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
-            "name": "openedAt",
+            "name": "opened_at",
             "type": "i64"
           },
           {
-            "name": "vestingEnd",
+            "name": "vesting_end",
             "type": "i64"
           },
           {
-            "name": "socialVotesAtOpening",
+            "name": "social_votes_at_opening",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "fundingFailed",
+      "name": "FundingFailed",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
-            "name": "totalRaised",
+            "name": "total_raised",
             "type": "u64"
           },
           {
-            "name": "holderCount",
+            "name": "holder_count",
             "type": "u64"
           },
           {
-            "name": "holdersOk",
+            "name": "holders_ok",
             "type": "bool"
           },
           {
-            "name": "minRaiseOk",
+            "name": "min_raise_ok",
             "type": "bool"
           },
           {
-            "name": "goalOk",
+            "name": "goal_ok",
             "type": "bool"
           },
           {
-            "name": "failedAt",
+            "name": "failed_at",
             "type": "i64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "fundingSucceeded",
+      "name": "FundingSucceeded",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
-            "name": "totalRaised",
+            "name": "total_raised",
             "type": "u64"
           },
           {
-            "name": "holderCount",
+            "name": "holder_count",
             "type": "u64"
           },
           {
-            "name": "graduatedAt",
+            "name": "graduated_at",
             "type": "i64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "healthCheckEmitted",
+      "name": "HealthCheckEmitted",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
-            "name": "checkNumber",
+            "name": "check_number",
             "type": "u8"
           },
           {
-            "name": "totalRaised",
+            "name": "total_raised",
             "type": "u64"
           },
           {
-            "name": "targetAmount",
+            "name": "target_amount",
             "type": "u64"
           },
           {
-            "name": "holderCount",
+            "name": "holder_count",
             "type": "u64"
           },
           {
-            "name": "onTrack",
+            "name": "on_track",
             "type": "bool"
           },
           {
-            "name": "checkedAt",
+            "name": "checked_at",
             "type": "i64"
           }
         ]
       }
     },
     {
-      "name": "platform",
+      "name": "Platform",
       "docs": [
         "Estado global de la plataforma Quorum.",
         "Un único PDA controla la configuración y tesorería."
@@ -1388,14 +1701,14 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "totalProjects",
+            "name": "total_projects",
             "docs": [
               "Total de proyectos creados (sirve como nonce para PDAs)"
             ],
             "type": "u64"
           },
           {
-            "name": "totalFeesCollected",
+            "name": "total_fees_collected",
             "docs": [
               "Total acumulado en fees (en lamports)"
             ],
@@ -1412,7 +1725,7 @@ export type Quorum = {
       }
     },
     {
-      "name": "project",
+      "name": "Project",
       "docs": [
         "Datos principales de un proyecto en Quorum."
       ],
@@ -1427,14 +1740,14 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "tokenMint",
+            "name": "token_mint",
             "docs": [
               "Mint del token SPL creado para este proyecto"
             ],
             "type": "pubkey"
           },
           {
-            "name": "projectId",
+            "name": "project_id",
             "docs": [
               "ID único del proyecto (índice secuencial)"
             ],
@@ -1462,7 +1775,7 @@ export type Quorum = {
             "type": "string"
           },
           {
-            "name": "websiteUrl",
+            "name": "website_url",
             "docs": [
               "URL del sitio web o repositorio"
             ],
@@ -1475,26 +1788,26 @@ export type Quorum = {
             ],
             "type": {
               "defined": {
-                "name": "projectState"
+                "name": "ProjectState"
               }
             }
           },
           {
-            "name": "socialVoteStart",
+            "name": "social_vote_start",
             "docs": [
               "Timestamp de inicio de la votación social (Día 1)"
             ],
             "type": "i64"
           },
           {
-            "name": "socialVotes",
+            "name": "social_votes",
             "docs": [
               "Total de votos sociales recibidos"
             ],
             "type": "u64"
           },
           {
-            "name": "economicPhaseActive",
+            "name": "economic_phase_active",
             "docs": [
               "Si la fase económica ya está abierta",
               "Puede ser true mientras la social sigue activa (Día 15+)"
@@ -1502,14 +1815,14 @@ export type Quorum = {
             "type": "bool"
           },
           {
-            "name": "economicPhaseOpen",
+            "name": "economic_phase_open",
             "docs": [
               "Timestamp en que abrió la fase económica (Día 15)"
             ],
             "type": "i64"
           },
           {
-            "name": "raiseGoal",
+            "name": "raise_goal",
             "docs": [
               "Meta de recaudación definida por el dev (en lamports)",
               "Debe ser >= MIN_RAISE_LAMPORTS ($100,000 USD equiv.)"
@@ -1517,63 +1830,63 @@ export type Quorum = {
             "type": "u64"
           },
           {
-            "name": "totalRaised",
+            "name": "total_raised",
             "docs": [
               "Total recaudado hasta el momento (en lamports)"
             ],
             "type": "u64"
           },
           {
-            "name": "holderCount",
+            "name": "holder_count",
             "docs": [
               "Número de contribuidores únicos (holders)"
             ],
             "type": "u64"
           },
           {
-            "name": "platformFeePaid",
+            "name": "platform_fee_paid",
             "docs": [
               "Fee ya cobrada por la plataforma (en lamports)"
             ],
             "type": "u64"
           },
           {
-            "name": "healthCheck1Emitted",
+            "name": "health_check_1_emitted",
             "docs": [
               "Si ya se emitió el health check del Mes 3"
             ],
             "type": "bool"
           },
           {
-            "name": "healthCheck2Emitted",
+            "name": "health_check_2_emitted",
             "docs": [
               "Si ya se emitió el health check del Mes 6"
             ],
             "type": "bool"
           },
           {
-            "name": "vestingStart",
+            "name": "vesting_start",
             "docs": [
               "Timestamp en que empieza el vesting (= economic_phase_open)"
             ],
             "type": "i64"
           },
           {
-            "name": "vestingEnd",
+            "name": "vesting_end",
             "docs": [
               "Timestamp en que termina el vesting y se evalúa la graduación (Día 284)"
             ],
             "type": "i64"
           },
           {
-            "name": "lastDevActivity",
+            "name": "last_dev_activity",
             "docs": [
               "Último timestamp de actividad registrada del dev"
             ],
             "type": "i64"
           },
           {
-            "name": "devLocked",
+            "name": "dev_locked",
             "docs": [
               "Si el dev está bloqueado por inactividad (60 días sin actividad)"
             ],
@@ -1590,12 +1903,12 @@ export type Quorum = {
       }
     },
     {
-      "name": "projectCreated",
+      "name": "ProjectCreated",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
@@ -1611,18 +1924,18 @@ export type Quorum = {
             "type": "string"
           },
           {
-            "name": "raiseGoal",
+            "name": "raise_goal",
             "type": "u64"
           },
           {
-            "name": "socialVoteStart",
+            "name": "social_vote_start",
             "type": "i64"
           }
         ]
       }
     },
     {
-      "name": "projectState",
+      "name": "ProjectState",
       "docs": [
         "Estados del ciclo de vida de un proyecto"
       ],
@@ -1630,69 +1943,49 @@ export type Quorum = {
         "kind": "enum",
         "variants": [
           {
-            "name": "socialVoting"
+            "name": "SocialVoting"
           },
           {
-            "name": "economicPhase"
+            "name": "EconomicPhase"
           },
           {
-            "name": "vesting"
+            "name": "Vesting"
           },
           {
-            "name": "failed"
+            "name": "Failed"
           },
           {
-            "name": "graduated"
+            "name": "Graduated"
           }
         ]
       }
     },
     {
-      "name": "refundIssued",
+      "name": "SocialPhaseClosed",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
-            "name": "contributor",
-            "type": "pubkey"
-          },
-          {
-            "name": "refundAmount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "socialPhaseClosed",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "projectId",
+            "name": "final_votes",
             "type": "u64"
           },
           {
-            "name": "finalVotes",
-            "type": "u64"
-          },
-          {
-            "name": "closedAt",
+            "name": "closed_at",
             "type": "i64"
           },
           {
-            "name": "economicPhaseActive",
+            "name": "economic_phase_active",
             "type": "bool"
           }
         ]
       }
     },
     {
-      "name": "socialVote",
+      "name": "SocialVote",
       "docs": [
         "Registra el voto social de una wallet en un proyecto.",
         "Previene votar dos veces desde la misma wallet.",
@@ -1702,7 +1995,7 @@ export type Quorum = {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "docs": [
               "Proyecto votado"
             ],
@@ -1716,7 +2009,7 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "votedAt",
+            "name": "voted_at",
             "docs": [
               "Timestamp del voto"
             ],
@@ -1733,12 +2026,12 @@ export type Quorum = {
       }
     },
     {
-      "name": "socialVoteCast",
+      "name": "SocialVoteCast",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "projectId",
+            "name": "project_id",
             "type": "u64"
           },
           {
@@ -1746,7 +2039,123 @@ export type Quorum = {
             "type": "pubkey"
           },
           {
-            "name": "totalVotes",
+            "name": "total_votes",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultAccount",
+      "docs": [
+        "Vault del proyecto — custodia SOL de contribuidores.",
+        "PDA derivada de [VAULT_SEED, project_id]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project",
+            "docs": [
+              "PDA del proyecto propietario"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "total_received",
+            "docs": [
+              "Total SOL neto recibido en lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded",
+            "docs": [
+              "Total SOL devuelto en reembolsos en lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump del PDA"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RefundProcessed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "contributor",
+            "type": "pubkey"
+          },
+          {
+            "name": "refund_amount",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_at",
+            "type": "i64"
+          },
+          {
+            "name": "vault_total_refunded",
+            "type": "u64"
+          },
+          {
+            "name": "vault_total_received",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_received",
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded",
+            "type": "u64"
+          },
+          {
+            "name": "closed_by",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokensClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "contributor",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokens_minted",
             "type": "u64"
           }
         ]

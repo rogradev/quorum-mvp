@@ -222,7 +222,7 @@
           }
         },
         {
-          "name": "project_vault",
+          "name": "vault",
           "writable": true,
           "pda": {
             "seeds": [
@@ -252,6 +252,9 @@
           "name": "contributor",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "price_feed"
         },
         {
           "name": "system_program",
@@ -313,6 +316,29 @@
                   106,
                   101,
                   99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "platform.total_projects",
+                "account": "Platform"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
                   116
                 ]
               },
@@ -440,6 +466,31 @@
               }
             ]
           }
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "price_feed"
         },
         {
           "name": "caller",
@@ -614,7 +665,7 @@
           }
         },
         {
-          "name": "project_vault",
+          "name": "vault",
           "writable": true,
           "pda": {
             "seeds": [
@@ -737,6 +788,173 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "close_vault",
+      "discriminator": [
+        141,
+        103,
+        17,
+        126,
+        72,
+        75,
+        29,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_tokens",
+      "discriminator": [
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "contribution",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              },
+              {
+                "kind": "account",
+                "path": "contributor"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true
+        },
+        {
+          "name": "contributor_token_account",
+          "writable": true
+        },
+        {
+          "name": "contributor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe1bC8"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -790,6 +1008,19 @@
         130,
         73,
         33
+      ]
+    },
+    {
+      "name": "VaultAccount",
+      "discriminator": [
+        230,
+        251,
+        241,
+        83,
+        139,
+        202,
+        93,
+        28
       ]
     }
   ],
@@ -899,19 +1130,6 @@
       ]
     },
     {
-      "name": "RefundIssued",
-      "discriminator": [
-        249,
-        16,
-        159,
-        159,
-        93,
-        186,
-        145,
-        206
-      ]
-    },
-    {
       "name": "SocialPhaseClosed",
       "discriminator": [
         201,
@@ -935,6 +1153,45 @@
         237,
         5,
         119
+      ]
+    },
+    {
+      "name": "RefundProcessed",
+      "discriminator": [
+        203,
+        88,
+        236,
+        233,
+        192,
+        178,
+        57,
+        161
+      ]
+    },
+    {
+      "name": "VaultClosed",
+      "discriminator": [
+        238,
+        129,
+        38,
+        228,
+        227,
+        118,
+        249,
+        215
+      ]
+    },
+    {
+      "name": "TokensClaimed",
+      "discriminator": [
+        25,
+        128,
+        244,
+        55,
+        241,
+        136,
+        200,
+        91
       ]
     }
   ],
@@ -1063,6 +1320,36 @@
       "code": 6024,
       "name": "Unauthorized",
       "msg": "Solo el administrador de la plataforma puede ejecutar esto"
+    },
+    {
+      "code": 6025,
+      "name": "VaultProjectMismatch",
+      "msg": "El vault no pertenece a este proyecto"
+    },
+    {
+      "code": 6026,
+      "name": "VaultNotFullyRefunded",
+      "msg": "Quedan reembolsos pendientes — el vault no se puede cerrar todavía"
+    },
+    {
+      "code": 6027,
+      "name": "InsufficientVaultBalance",
+      "msg": "El vault no tiene saldo suficiente para cubrir el reembolso"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidPriceFeed",
+      "msg": "La cuenta del price feed de Pyth no es válida"
+    },
+    {
+      "code": 6029,
+      "name": "StalePriceFeed",
+      "msg": "El precio de Pyth está desactualizado (más de 60 segundos)"
+    },
+    {
+      "code": 6030,
+      "name": "PriceOutOfRange",
+      "msg": "El precio de SOL está fuera del rango permitido ($1–$10,000)"
     }
   ],
   "types": [
@@ -1125,6 +1412,20 @@
             "type": "i64"
           },
           {
+            "name": "sol_price_at_contribution",
+            "docs": [
+              "Precio de SOL en USD al momento de la contribución"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "refunded_at",
+            "docs": [
+              "Timestamp del reembolso (0 si no ha sido reembolsado)"
+            ],
+            "type": "i64"
+          },
+          {
             "name": "bump",
             "docs": [
               "Bump del PDA"
@@ -1165,6 +1466,10 @@
           },
           {
             "name": "platform_fee",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
             "type": "u64"
           }
         ]
@@ -1294,6 +1599,10 @@
           {
             "name": "failed_at",
             "type": "i64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
           }
         ]
       }
@@ -1318,6 +1627,10 @@
           {
             "name": "graduated_at",
             "type": "i64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
           }
         ]
       }
@@ -1642,26 +1955,6 @@
       }
     },
     {
-      "name": "RefundIssued",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "contributor",
-            "type": "pubkey"
-          },
-          {
-            "name": "refund_amount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "SocialPhaseClosed",
       "type": {
         "kind": "struct",
@@ -1741,6 +2034,122 @@
           },
           {
             "name": "total_votes",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultAccount",
+      "docs": [
+        "Vault del proyecto — custodia SOL de contribuidores.",
+        "PDA derivada de [VAULT_SEED, project_id]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project",
+            "docs": [
+              "PDA del proyecto propietario"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "total_received",
+            "docs": [
+              "Total SOL neto recibido en lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded",
+            "docs": [
+              "Total SOL devuelto en reembolsos en lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump del PDA"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RefundProcessed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "contributor",
+            "type": "pubkey"
+          },
+          {
+            "name": "refund_amount",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_at",
+            "type": "i64"
+          },
+          {
+            "name": "vault_total_refunded",
+            "type": "u64"
+          },
+          {
+            "name": "vault_total_received",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_received",
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded",
+            "type": "u64"
+          },
+          {
+            "name": "closed_by",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokensClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "contributor",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokens_minted",
             "type": "u64"
           }
         ]
