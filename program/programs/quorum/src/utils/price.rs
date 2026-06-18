@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use pyth_sdk_solana::load_price_feed_from_account_info;
+use pyth_sdk_solana::state::SolanaPriceAccount;
 use crate::constants::{MAX_PRICE_AGE_SECS, MIN_SOL_PRICE_USD, MAX_SOL_PRICE_USD};
 use crate::errors::QuorumError;
 
@@ -8,7 +8,7 @@ const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 /// Carga el feed de Pyth, valida la edad del precio y lo convierte a USD enteros.
 /// Devuelve el precio de SOL en USD (ej: 150 para $150.00).
 pub fn get_sol_price_usd(price_feed_info: &AccountInfo, now: i64) -> Result<u64> {
-    let feed = load_price_feed_from_account_info(price_feed_info)
+    let feed = SolanaPriceAccount::account_info_to_feed(price_feed_info)
         .map_err(|_| error!(QuorumError::InvalidPriceFeed))?;
 
     let price = feed
