@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-const PROGRAM_ID = new PublicKey("DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk");
+const PROGRAM_ID = new PublicKey("J9o5cuQAkeCWAfGsnE2qxRNAM1hbXCo7MTLxqyjecm1y");
 const PLATFORM_SEED = Buffer.from("platform");
 
 async function main() {

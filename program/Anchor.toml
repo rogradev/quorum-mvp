@@ -5,10 +5,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-quorum = "DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk"
+quorum = "J9o5cuQAkeCWAfGsnE2qxRNAM1hbXCo7MTLxqyjecm1y"
 
 [programs.localnet]
-quorum = "DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk"
+quorum = "J9o5cuQAkeCWAfGsnE2qxRNAM1hbXCo7MTLxqyjecm1y"
 
 [provider]
 cluster = "localnet"

@@ -128,8 +128,8 @@ meaningful code changes.
 
 | Field | Value |
 |-------|-------|
-| Program ID (devnet) | DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk |
-| Platform PDA | 9KV2dLKNyiXvEaawpeAKkp1jCFaUYGtehcnPzdk4nvyj |
+| Program ID (devnet) | J9o5cuQAkeCWAfGsnE2qxRNAM1hbXCo7MTLxqyjecm1y |
+| Platform PDA | wp2SCvdW46pAb641aojDLAkmuLofcsXDNpGRkhwynjP |
 | Framework | Anchor 0.31.0 / Rust |
 | Network | Solana Devnet (mainnet pending audit) |
 | GitHub | github.com/rogradev/quorum-mvp |

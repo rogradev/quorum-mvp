@@ -12,7 +12,7 @@ use crate::state::{Platform, Project, Contribution, SocialVote, VaultAccount};
 use crate::constants::*;
 use crate::errors::QuorumError;
 
-declare_id!("DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk");
+declare_id!("J9o5cuQAkeCWAfGsnE2qxRNAM1hbXCo7MTLxqyjecm1y");
 
 // ── Contextos de cuentas ───────────────────────────────────────
 
