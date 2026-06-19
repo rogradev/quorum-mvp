@@ -16,6 +16,14 @@ cpi = ["no-entrypoint"]
 default = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
+[lints.rust]
+# Anchor/Solana macros expand cfg checks using features/target_os values that are internal
+# to those crates but evaluated in the context of the consuming crate. Suppress them here.
+unexpected_cfgs = { level = "allow", check-cfg = [
+    'cfg(feature, values("anchor-debug", "custom-heap", "custom-panic"))',
+    'cfg(target_os, values("solana"))',
+] }
+
 [dependencies]
 anchor-lang = { version = "0.31.0", features = ["init-if-needed"] }
 anchor-spl = { version = "0.31.0", features = ["token", "associated_token"] }
