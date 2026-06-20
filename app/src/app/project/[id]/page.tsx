@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { AnchorProvider, BN } from "@coral-xyz/anchor";
-import { getProgram, getPlatformPda, getProjectPda, getVotePda, getContributionPda, getVaultPda } from "@/lib/anchor";
+import { getProgram, getPlatformPda, getProjectPda, getVotePda, getContributionPda, getVaultPda, PYTH_FEED } from "@/lib/anchor";
 import {
   PROJECT_STATE_LABELS,
   PROJECT_STATE_COLORS,
@@ -67,7 +67,7 @@ export default function ProjectPage() {
       const [projectPda] = getProjectPda(pid);
       const [votePda] = getVotePda(pid, publicKey);
 
-      await program.methods
+      await (program.methods as any)
         .castSocialVote()
         .accounts({
           project: projectPda,
@@ -112,15 +112,16 @@ export default function ProjectPage() {
         (contributionUsd / SOL_PRICE_USD) * LAMPORTS_PER_SOL
       );
 
-      await program.methods
+      await (program.methods as any)
         .contribute(new BN(amountLamports))
         .accounts({
           platform: platformPda,
           project: projectPda,
           contribution: contributionPda,
-          projectVault: vaultPda,
+          vault: vaultPda,
           treasury,
           contributor: publicKey,
+          priceFeed: PYTH_FEED,
           systemProgram: SystemProgram.programId,
         })
         .rpc();

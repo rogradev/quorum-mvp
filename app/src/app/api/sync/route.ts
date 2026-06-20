@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
+import { AnchorProvider } from "@coral-xyz/anchor";
+import type { Quorum } from "@/lib/quorum_types";
+import type { Program } from "@coral-xyz/anchor";
 import { getProgram, getPlatformPda, getProjectPda, QUORUM_IDL } from "@/lib/anchor";
 import { RPC_ENDPOINT } from "@/lib/constants";
 import { Keypair } from "@solana/web3.js";
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function syncLatestProject(program: Program, connection: Connection) {
+async function syncLatestProject(program: Program<Quorum>, connection: Connection) {
   const [platformPda] = getPlatformPda();
 
   try {
@@ -73,7 +75,7 @@ async function syncLatestProject(program: Program, connection: Connection) {
   }
 }
 
-async function syncProject(program: Program, projectId: bigint) {
+async function syncProject(program: Program<Quorum>, projectId: bigint) {
   const [projectPda] = getProjectPda(projectId);
 
   try {
@@ -162,7 +164,7 @@ async function syncProject(program: Program, projectId: bigint) {
   }
 }
 
-async function syncAllProjects(program: Program, connection: Connection) {
+async function syncAllProjects(program: Program<Quorum>, connection: Connection) {
   const [platformPda] = getPlatformPda();
 
   try {

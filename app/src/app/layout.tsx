@@ -1,8 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
-import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import {
+  ConnectionProvider as _ConnectionProvider,
+  WalletProvider as _WalletProvider,
+} from "@solana/wallet-adapter-react";
+import { WalletModalProvider as _WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+
+// @types/react 18.3+ tightened FC return types, breaking wallet-adapter's
+// type declarations compiled against 18.2. Cast to generic ComponentType to unblock.
+type AnyProvider = React.ComponentType<{ children: React.ReactNode; [k: string]: unknown }>;
+const ConnectionProvider = _ConnectionProvider as unknown as AnyProvider;
+const WalletProvider = _WalletProvider as unknown as AnyProvider;
+const WalletModalProvider = _WalletModalProvider as unknown as AnyProvider;
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { RPC_ENDPOINT, TWITTER_URL, SITE_NAME } from "@/lib/constants";

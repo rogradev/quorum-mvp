@@ -5,7 +5,7 @@ import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { Keypair, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { AnchorProvider, BN } from "@coral-xyz/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { getProgram, getPlatformPda, getProjectPda } from "@/lib/anchor";
+import { getProgram, getPlatformPda, getProjectPda, getVaultPda } from "@/lib/anchor";
 import { SOL_PRICE_USD } from "@/lib/constants";
 
 const MIN_RAISE_USD = 100_000; // $100,000 minimum — matches MIN_RAISE_LAMPORTS on-chain
@@ -56,9 +56,10 @@ export default function LaunchPage() {
       const projectId = (platform as any).totalProjects as bigint;
 
       const [projectPda] = getProjectPda(projectId);
+      const [vaultPda] = getVaultPda(projectId);
       const tokenMint = Keypair.generate();
 
-      const tx = await program.methods
+      const tx = await (program.methods as any)
         .createProject({
           name: form.name,
           ticker: form.ticker.toUpperCase(),
@@ -69,6 +70,7 @@ export default function LaunchPage() {
         .accounts({
           platform: platformPda,
           project: projectPda,
+          vault: vaultPda,
           tokenMint: tokenMint.publicKey,
           dev: publicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
