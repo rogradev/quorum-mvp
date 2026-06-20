@@ -7,6 +7,9 @@ app/node_modules/
 program/target/
 program/.anchor/
 
+# Next.js build output
+app/.next/
+
 # Environment
 .env
 .env.local
