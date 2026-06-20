@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { SystemProgram, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { AnchorProvider, BN } from "@coral-xyz/anchor";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { getProgram, getPlatformPda, getProjectPda, getVotePda, getContributionPda, getVaultPda, PYTH_FEED } from "@/lib/anchor";
 import {
   PROJECT_STATE_LABELS,
@@ -32,10 +33,25 @@ export default function ProjectPage() {
   const [contributionUsd, setContributionUsd] = useState(1);
   const [actionStatus, setActionStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [actionError, setActionError] = useState("");
+  const [graduateLoading, setGraduateLoading] = useState(false);
+  const [graduateError, setGraduateError] = useState("");
+  const [graduateSuccess, setGraduateSuccess] = useState(false);
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimError, setClaimError] = useState("");
+  const [claimSuccess, setClaimSuccess] = useState(false);
+  const [onChainContrib, setOnChainContrib] = useState<{ tokensAllocated: number; claimed: boolean } | null>(null);
+  const [contribLoading, setContribLoading] = useState(false);
 
   useEffect(() => {
     fetchProject();
   }, [projectId]);
+
+  useEffect(() => {
+    if (project?.state === "GRADUATED" && publicKey) {
+      fetchOnChainContrib();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.state, publicKey?.toString()]);
 
   async function fetchProject() {
     try {
@@ -48,6 +64,34 @@ export default function ProjectPage() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchOnChainContrib() {
+    if (!publicKey || !project) return;
+    setContribLoading(true);
+    try {
+      const readOnlyWallet = {
+        publicKey,
+        signTransaction: async (tx: any) => tx,
+        signAllTransactions: async (txs: any[]) => txs,
+      };
+      const provider = new AnchorProvider(connection, readOnlyWallet as any, { commitment: "confirmed" });
+      const program = getProgram(provider);
+      const pid = BigInt(project.projectId);
+      const [contributionPda] = getContributionPda(pid, publicKey);
+      try {
+        const contrib = await program.account["contribution"].fetch(contributionPda);
+        const c = contrib as any;
+        setOnChainContrib({
+          tokensAllocated: Number(c.tokensAllocated) / 1_000_000,
+          claimed: c.claimed,
+        });
+      } catch {
+        setOnChainContrib(null);
+      }
+    } finally {
+      setContribLoading(false);
     }
   }
 
@@ -132,6 +176,95 @@ export default function ProjectPage() {
     } catch (e: any) {
       setActionError(e.message || "Error al contribuir");
       setActionStatus("error");
+    }
+  };
+
+  const handleGraduate = async () => {
+    if (!publicKey || !signTransaction || !signAllTransactions || !project) return;
+    setGraduateLoading(true);
+    setGraduateError("");
+    try {
+      const provider = new AnchorProvider(
+        connection,
+        { publicKey, signTransaction, signAllTransactions },
+        { commitment: "confirmed" }
+      );
+      const program = getProgram(provider);
+      const pid = BigInt(project.projectId);
+      const [projectPda] = getProjectPda(pid);
+      const [vaultPda] = getVaultPda(pid);
+
+      await (program.methods as any)
+        .graduateProject()
+        .accounts({
+          project: projectPda,
+          vault: vaultPda,
+          priceFeed: PYTH_FEED,
+          caller: publicKey,
+        })
+        .rpc();
+
+      setGraduateSuccess(true);
+      await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "finalize", projectId: project.projectId }),
+      });
+      fetchProject();
+    } catch (e: any) {
+      const msg: string = e?.message ?? e?.toString() ?? "";
+      if (msg.includes("GraduationNotAvailableYet")) {
+        setGraduateError("Graduation conditions not yet met (need Day 180+, 1,000 holders, and $100K raised)");
+      } else {
+        setGraduateError(msg || "Error graduating project");
+      }
+    } finally {
+      setGraduateLoading(false);
+    }
+  };
+
+  const handleClaimTokens = async () => {
+    if (!publicKey || !signTransaction || !signAllTransactions || !project) return;
+    setClaimLoading(true);
+    setClaimError("");
+    try {
+      const provider = new AnchorProvider(
+        connection,
+        { publicKey, signTransaction, signAllTransactions },
+        { commitment: "confirmed" }
+      );
+      const program = getProgram(provider);
+      const pid = BigInt(project.projectId);
+      const [projectPda] = getProjectPda(pid);
+      const [contributionPda] = getContributionPda(pid, publicKey);
+      const tokenMint = new PublicKey(project.tokenMint);
+      const contributorTokenAccount = getAssociatedTokenAddressSync(tokenMint, publicKey);
+
+      await (program.methods as any)
+        .claimTokens()
+        .accounts({
+          project: projectPda,
+          contribution: contributionPda,
+          tokenMint,
+          contributorTokenAccount,
+          contributor: publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      setClaimSuccess(true);
+      setOnChainContrib((prev) => (prev ? { ...prev, claimed: true } : null));
+      await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "finalize", projectId: project.projectId }),
+      });
+    } catch (e: any) {
+      setClaimError(e?.message ?? "Error claiming tokens");
+    } finally {
+      setClaimLoading(false);
     }
   };
 
@@ -332,61 +465,86 @@ export default function ProjectPage() {
           )}
 
           {project.state === "ECONOMIC_PHASE" && (
-            <ActionPanel
-              title="Fase 2: Contribuir"
-              description={`Máximo $${maxContributionUsd.toFixed(2)} USD por wallet (0.1% del supply).`}
-              color="blue"
-            >
-              <div className="space-y-3">
-                <div>
-                  <label className="label">Monto (USD)</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-quorum-muted font-display text-sm">$</span>
-                    <input
-                      className="input pl-8"
-                      type="number"
-                      min={1}
-                      max={maxContributionUsd}
-                      value={contributionUsd}
-                      onChange={(e) => setContributionUsd(Number(e.target.value))}
-                    />
+            <>
+              <ActionPanel
+                title="Fase 2: Contribuir"
+                description={`Máximo $${maxContributionUsd.toFixed(2)} USD por wallet (0.1% del supply).`}
+                color="blue"
+              >
+                <div className="space-y-3">
+                  <div>
+                    <label className="label">Monto (USD)</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-quorum-muted font-display text-sm">$</span>
+                      <input
+                        className="input pl-8"
+                        type="number"
+                        min={1}
+                        max={maxContributionUsd}
+                        value={contributionUsd}
+                        onChange={(e) => setContributionUsd(Number(e.target.value))}
+                      />
+                    </div>
+                    <p className="text-xs text-quorum-muted mt-1 font-display">
+                      ≈ {(contributionUsd / SOL_PRICE_USD).toFixed(4)} SOL
+                    </p>
                   </div>
-                  <p className="text-xs text-quorum-muted mt-1 font-display">
-                    ≈ {(contributionUsd / SOL_PRICE_USD).toFixed(4)} SOL
-                  </p>
-                </div>
 
-                <div className="bg-quorum-bg border border-quorum-border rounded-lg p-3 text-xs space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-quorum-muted">Fee plataforma (0.1%)</span>
-                    <span className="font-display">${(contributionUsd * 0.001).toFixed(4)}</span>
+                  <div className="bg-quorum-bg border border-quorum-border rounded-lg p-3 text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-quorum-muted">Fee plataforma (0.1%)</span>
+                      <span className="font-display">${(contributionUsd * 0.001).toFixed(4)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-quorum-muted">Neto al proyecto</span>
+                      <span className="font-display text-quorum-green">${(contributionUsd * 0.999).toFixed(4)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-quorum-muted">Neto al proyecto</span>
-                    <span className="font-display text-quorum-green">${(contributionUsd * 0.999).toFixed(4)}</span>
-                  </div>
-                </div>
 
-                {hasContributed ? (
-                  <div className="text-center py-2">
-                    <p className="text-quorum-green font-display text-sm">✓ Contribución registrada</p>
-                  </div>
+                  {hasContributed ? (
+                    <div className="text-center py-2">
+                      <p className="text-quorum-green font-display text-sm">✓ Contribución registrada</p>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn-primary w-full"
+                      onClick={handleContribute}
+                      disabled={
+                        !publicKey ||
+                        actionStatus === "loading" ||
+                        contributionUsd < 1 ||
+                        contributionUsd > maxContributionUsd
+                      }
+                    >
+                      {actionStatus === "loading" ? "Procesando..." : `Contribuir $${contributionUsd}`}
+                    </button>
+                  )}
+                </div>
+              </ActionPanel>
+
+              <ActionPanel
+                title="Graduate Project"
+                description="Available after Day 180 once 1,000 holders and $100K raised are met. Anyone can trigger graduation."
+                color="green"
+              >
+                {graduateSuccess ? (
+                  <p className="text-quorum-green font-display text-xs text-center py-2">✓ Project graduated</p>
                 ) : (
-                  <button
-                    className="btn-primary w-full"
-                    onClick={handleContribute}
-                    disabled={
-                      !publicKey ||
-                      actionStatus === "loading" ||
-                      contributionUsd < 1 ||
-                      contributionUsd > maxContributionUsd
-                    }
-                  >
-                    {actionStatus === "loading" ? "Procesando..." : `Contribuir $${contributionUsd}`}
-                  </button>
+                  <>
+                    <button
+                      className="btn-primary w-full"
+                      onClick={handleGraduate}
+                      disabled={!publicKey || graduateLoading}
+                    >
+                      {graduateLoading ? "Processing..." : "Graduate Project"}
+                    </button>
+                    {graduateError && (
+                      <p className="text-xs text-quorum-amber mt-2 font-display">{graduateError}</p>
+                    )}
+                  </>
                 )}
-              </div>
-            </ActionPanel>
+              </ActionPanel>
+            </>
           )}
 
           {project.state === "VESTING" && (
@@ -403,6 +561,63 @@ export default function ProjectPage() {
                 .
               </p>
             </div>
+          )}
+
+          {project.state === "GRADUATED" && (
+            <>
+              <div className="card border-purple-400/20 bg-purple-400/5">
+                <h3 className="font-display text-xs text-purple-400 tracking-widest uppercase mb-2">
+                  Graduated
+                </h3>
+                <p className="text-sm text-quorum-text">
+                  Este proyecto alcanzó todos los requisitos de la comunidad y se graduó. Los tokens están disponibles para reclamar.
+                </p>
+              </div>
+
+              {publicKey && (
+                <div className="card">
+                  <h3 className="font-display text-xs text-quorum-muted tracking-widest uppercase mb-3">
+                    Claim Tokens
+                  </h3>
+                  {contribLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="w-5 h-5 border-2 border-quorum-green border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : onChainContrib ? (
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-quorum-muted font-display">Tokens allocated</span>
+                        <span className="font-display text-quorum-green">
+                          {onChainContrib.tokensAllocated.toLocaleString()} {project.ticker}
+                        </span>
+                      </div>
+                      {onChainContrib.claimed || claimSuccess ? (
+                        <p className="text-xs text-quorum-green font-display text-center py-2">✓ Tokens claimed</p>
+                      ) : (
+                        <>
+                          <button
+                            className="btn-primary w-full"
+                            onClick={handleClaimTokens}
+                            disabled={claimLoading}
+                          >
+                            {claimLoading
+                              ? "Claiming..."
+                              : `Claim ${onChainContrib.tokensAllocated.toLocaleString()} ${project.ticker}`}
+                          </button>
+                          {claimError && (
+                            <p className="text-xs text-quorum-red mt-2 font-display">{claimError}</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-quorum-muted font-display text-center py-2">
+                      No contribution found for this wallet
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {project.state === "FAILED" && (
