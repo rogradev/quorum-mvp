@@ -88,7 +88,7 @@ export function shortenAddress(address: string, chars = 4): string {
 
 export function timeRemaining(deadline: Date): string {
   const diff = deadline.getTime() - Date.now();
-  if (diff <= 0) return "Terminado";
+  if (diff <= 0) return "Ended";
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   if (days > 0) return `${days}d ${hours}h`;
@@ -98,11 +98,11 @@ export function timeRemaining(deadline: Date): string {
 
 // ── Labels y colores de estado ────────────────────────────────
 export const PROJECT_STATE_LABELS: Record<string, string> = {
-  SOCIAL_VOTING:  "Votación Social",
-  ECONOMIC_PHASE: "Fondeo Activo",
-  VESTING:        "Vesting Activo",
-  FAILED:         "Reembolso",
-  GRADUATED:      "Graduado",
+  SOCIAL_VOTING:  "Social Voting",
+  ECONOMIC_PHASE: "Funding Active",
+  VESTING:        "Vesting Active",
+  FAILED:         "Refund",
+  GRADUATED:      "Graduated",
 };
 
 export const PROJECT_STATE_COLORS: Record<string, string> = {

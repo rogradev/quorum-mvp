@@ -125,7 +125,7 @@ export default function ProjectPage() {
       setActionStatus("success");
       fetchProject();
     } catch (e: any) {
-      setActionError(e.message || "Error al votar");
+      setActionError(e.message || "Error voting");
       setActionStatus("error");
     }
   };
@@ -148,7 +148,6 @@ export default function ProjectPage() {
       const [contributionPda] = getContributionPda(pid, publicKey);
       const [vaultPda] = getVaultPda(pid);
 
-      // Obtener treasury de la plataforma
       const platformData = await program.account["platform"].fetch(platformPda);
       const treasury = (platformData as any).treasury;
 
@@ -174,7 +173,7 @@ export default function ProjectPage() {
       setActionStatus("success");
       fetchProject();
     } catch (e: any) {
-      setActionError(e.message || "Error al contribuir");
+      setActionError(e.message || "Error contributing");
       setActionStatus("error");
     }
   };
@@ -283,21 +282,15 @@ export default function ProjectPage() {
       ? (Number(project.totalRaised) / Number(project.raiseGoal)) * 100
       : 0;
 
-  const holderProgress = Math.min(
-    (Number(project.holderCount) / 1000) * 100,
-    100
-  );
-
-  const maxContributionUsd =
-    lamportsToUsd(BigInt(project.raiseGoal)) * 0.001;
+  const holderProgress = Math.min((Number(project.holderCount) / 1000) * 100, 100);
+  const maxContributionUsd = lamportsToUsd(BigInt(project.raiseGoal)) * 0.001;
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      {/* Header del proyecto */}
       <div className="mb-8 animate-fade-in">
         <div className="flex items-center gap-3 mb-4">
           <a href="/" className="text-xs text-quorum-muted hover:text-quorum-text font-display">
-            ← Proyectos
+            ← Projects
           </a>
         </div>
 
@@ -317,7 +310,7 @@ export default function ProjectPage() {
                 </span>
                 {project.devLocked && (
                   <span className="badge text-quorum-red border-quorum-red bg-quorum-red-dim">
-                    ⚠️ Dev inactivo
+                    ⚠️ Dev inactive
                   </span>
                 )}
               </div>
@@ -326,7 +319,7 @@ export default function ProjectPage() {
 
           {deadline && (
             <div className="text-right">
-              <p className="text-xs text-quorum-muted font-display">Tiempo restante</p>
+              <p className="text-xs text-quorum-muted font-display">Time remaining</p>
               <p className="font-display text-lg text-quorum-amber">
                 {timeRemaining(deadline)}
               </p>
@@ -336,12 +329,11 @@ export default function ProjectPage() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Columna principal */}
+        {/* Main column */}
         <div className="md:col-span-2 space-y-6">
-          {/* Descripción */}
           <div className="card">
             <h2 className="font-display text-xs text-quorum-muted tracking-widest uppercase mb-3">
-              Descripción
+              Description
             </h2>
             <p className="text-quorum-text text-sm leading-relaxed">
               {project.description}
@@ -358,7 +350,7 @@ export default function ProjectPage() {
             )}
           </div>
 
-          {/* Métricas */}
+          {/* Metrics */}
           <div className="grid grid-cols-2 gap-4">
             <div className="stat-card">
               <span className="text-2xl font-display font-medium">
@@ -374,7 +366,7 @@ export default function ProjectPage() {
                 />
               </div>
               <span className="text-xs text-quorum-muted font-display">
-                {holderProgress.toFixed(1)}% del mínimo (1,000)
+                {holderProgress.toFixed(1)}% of minimum (1,000)
               </span>
             </div>
 
@@ -383,7 +375,7 @@ export default function ProjectPage() {
                 {formatUsd(lamportsToUsd(BigInt(project.totalRaised)))}
               </span>
               <span className="text-xs text-quorum-muted font-display tracking-wider uppercase">
-                Recaudado
+                Raised
               </span>
               <div className="h-1 bg-quorum-border rounded mt-2">
                 <div
@@ -392,7 +384,7 @@ export default function ProjectPage() {
                 />
               </div>
               <span className="text-xs text-quorum-muted font-display">
-                Meta: {formatUsd(lamportsToUsd(BigInt(project.raiseGoal)))}
+                Goal: {formatUsd(lamportsToUsd(BigInt(project.raiseGoal)))}
               </span>
             </div>
 
@@ -401,7 +393,7 @@ export default function ProjectPage() {
                 {formatNumber(Number(project.socialVotes))}
               </span>
               <span className="text-xs text-quorum-muted font-display tracking-wider uppercase">
-                Votos Sociales
+                Social Votes
               </span>
             </div>
 
@@ -409,26 +401,26 @@ export default function ProjectPage() {
               <span className="text-2xl font-display font-medium">
                 {project.vestingEnd
                   ? timeRemaining(new Date(project.vestingEnd))
-                  : "9 meses"}
+                  : "9 months"}
               </span>
               <span className="text-xs text-quorum-muted font-display tracking-wider uppercase">
-                Vesting restante
+                Vesting remaining
               </span>
             </div>
           </div>
 
-          {/* Reglas del protocolo aplicadas */}
+          {/* On-chain parameters */}
           <div className="card">
             <h2 className="font-display text-xs text-quorum-muted tracking-widest uppercase mb-3">
-              Parámetros on-chain
+              On-chain Parameters
             </h2>
             <div className="space-y-2">
               {[
-                ["Límite por holder", "0.1% del supply"],
-                ["Holders mínimos", "1,000"],
-                ["Meta de recaudación", formatUsd(lamportsToUsd(BigInt(project.raiseGoal)))],
-                ["Vesting", "9 meses, bloqueo total"],
-                ["Fee de plataforma", "0.1% ya cobrado"],
+                ["Holder limit", "0.1% of supply"],
+                ["Minimum holders", "1,000"],
+                ["Raise goal", formatUsd(lamportsToUsd(BigInt(project.raiseGoal)))],
+                ["Vesting", "9 months, fully locked"],
+                ["Platform fee", "0.1% already collected"],
                 ["Dev wallet", `${project.devWallet.slice(0, 8)}...${project.devWallet.slice(-8)}`],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between text-xs">
@@ -440,17 +432,17 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        {/* Panel de acción */}
+        {/* Action panel */}
         <div className="space-y-4">
           {project.state === "SOCIAL_VOTING" && (
             <ActionPanel
-              title="Fase 1: Votación Social"
-              description="Vota si crees que este proyecto tiene utilidad real. Sin dinero en juego."
+              title="Phase 1: Social Voting"
+              description="Vote if you believe this project has real utility. No money at stake."
               color="amber"
             >
               {hasVoted ? (
                 <div className="text-center py-4">
-                  <p className="text-quorum-green font-display text-sm">✓ Voto registrado</p>
+                  <p className="text-quorum-green font-display text-sm">✓ Vote recorded</p>
                 </div>
               ) : (
                 <button
@@ -458,7 +450,7 @@ export default function ProjectPage() {
                   onClick={handleVote}
                   disabled={!publicKey || actionStatus === "loading"}
                 >
-                  {actionStatus === "loading" ? "Registrando..." : "Votar por este proyecto"}
+                  {actionStatus === "loading" ? "Recording..." : "Vote for this project"}
                 </button>
               )}
             </ActionPanel>
@@ -467,13 +459,13 @@ export default function ProjectPage() {
           {project.state === "ECONOMIC_PHASE" && (
             <>
               <ActionPanel
-                title="Fase 2: Contribuir"
-                description={`Máximo $${maxContributionUsd.toFixed(2)} USD por wallet (0.1% del supply).`}
+                title="Phase 2: Contribute"
+                description={`Max $${maxContributionUsd.toFixed(2)} USD per wallet (0.1% of supply).`}
                 color="blue"
               >
                 <div className="space-y-3">
                   <div>
-                    <label className="label">Monto (USD)</label>
+                    <label className="label">Amount (USD)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-quorum-muted font-display text-sm">$</span>
                       <input
@@ -492,18 +484,18 @@ export default function ProjectPage() {
 
                   <div className="bg-quorum-bg border border-quorum-border rounded-lg p-3 text-xs space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-quorum-muted">Fee plataforma (0.1%)</span>
+                      <span className="text-quorum-muted">Platform fee (0.1%)</span>
                       <span className="font-display">${(contributionUsd * 0.001).toFixed(4)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-quorum-muted">Neto al proyecto</span>
+                      <span className="text-quorum-muted">Net to project</span>
                       <span className="font-display text-quorum-green">${(contributionUsd * 0.999).toFixed(4)}</span>
                     </div>
                   </div>
 
                   {hasContributed ? (
                     <div className="text-center py-2">
-                      <p className="text-quorum-green font-display text-sm">✓ Contribución registrada</p>
+                      <p className="text-quorum-green font-display text-sm">✓ Contribution recorded</p>
                     </div>
                   ) : (
                     <button
@@ -516,7 +508,7 @@ export default function ProjectPage() {
                         contributionUsd > maxContributionUsd
                       }
                     >
-                      {actionStatus === "loading" ? "Procesando..." : `Contribuir $${contributionUsd}`}
+                      {actionStatus === "loading" ? "Processing..." : `Contribute $${contributionUsd}`}
                     </button>
                   )}
                 </div>
@@ -550,13 +542,12 @@ export default function ProjectPage() {
           {project.state === "VESTING" && (
             <div className="card border-quorum-green/20 bg-quorum-green-dim">
               <h3 className="font-display text-xs text-quorum-green tracking-widest uppercase mb-2">
-                Vesting Activo
+                Vesting Active
               </h3>
               <p className="text-sm text-quorum-text">
-                El proyecto fue fondeo exitosamente. Dev y holders están en
-                vesting hasta{" "}
+                Project successfully funded. Dev and holders are in vesting until{" "}
                 {project.vestingEnd
-                  ? new Date(project.vestingEnd).toLocaleDateString("es-ES")
+                  ? new Date(project.vestingEnd).toLocaleDateString("en-US")
                   : "—"}
                 .
               </p>
@@ -570,7 +561,7 @@ export default function ProjectPage() {
                   Graduated
                 </h3>
                 <p className="text-sm text-quorum-text">
-                  Este proyecto alcanzó todos los requisitos de la comunidad y se graduó. Los tokens están disponibles para reclamar.
+                  This project met all community requirements and graduated. Tokens are available to claim.
                 </p>
               </div>
 
@@ -623,14 +614,14 @@ export default function ProjectPage() {
           {project.state === "FAILED" && (
             <div className="card border-quorum-red/20 bg-quorum-red-dim">
               <h3 className="font-display text-xs text-quorum-red tracking-widest uppercase mb-2">
-                Proyecto Fallido
+                Project Failed
               </h3>
               <p className="text-sm text-quorum-text mb-4">
-                El proyecto no alcanzó los requisitos mínimos. Si contribuiste,
-                puedes reclamar tu reembolso.
+                The project did not meet the minimum requirements. If you contributed,
+                you can claim your refund.
               </p>
               <button className="btn-secondary w-full text-quorum-red border-quorum-red">
-                Reclamar Reembolso
+                Claim Refund
               </button>
             </div>
           )}
@@ -643,21 +634,21 @@ export default function ProjectPage() {
 
           {actionStatus === "success" && !hasVoted && !hasContributed && (
             <div className="p-3 bg-quorum-green-dim border border-quorum-green rounded-lg">
-              <p className="text-xs text-quorum-green font-display">✓ Operación exitosa</p>
+              <p className="text-xs text-quorum-green font-display">✓ Transaction successful</p>
             </div>
           )}
 
-          {/* Info del protocolo */}
+          {/* Why Quorum */}
           <div className="card">
             <h3 className="font-display text-xs text-quorum-muted tracking-widest uppercase mb-3">
-              ¿Por qué Quorum?
+              Why Quorum?
             </h3>
             <ul className="space-y-2">
               {[
-                "Sin rugpull posible durante 9 meses",
-                "El dev tampoco puede vender",
-                "El precio sube por adopción, no especulación",
-                "Si falla, recuperas el 99% automáticamente",
+                "No rugpull possible for 9 months",
+                "Dev can't sell either",
+                "Price rises through adoption, not speculation",
+                "If it fails, you get 99% back automatically",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 text-xs text-quorum-muted">
                   <span className="text-quorum-green mt-0.5">→</span>
@@ -711,8 +702,8 @@ function LoadingPage() {
 function NotFound() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-24 text-center">
-      <p className="text-quorum-muted">Proyecto no encontrado.</p>
-      <a href="/" className="btn-primary inline-block mt-4">← Volver</a>
+      <p className="text-quorum-muted">Project not found.</p>
+      <a href="/" className="btn-primary inline-block mt-4">← Back</a>
     </div>
   );
 }

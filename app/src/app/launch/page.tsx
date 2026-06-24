@@ -8,7 +8,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getProgram, getPlatformPda, getProjectPda, getVaultPda } from "@/lib/anchor";
 import { SOL_PRICE_USD } from "@/lib/constants";
 
-const MIN_RAISE_USD = 100_000; // $100,000 minimum — matches MIN_RAISE_LAMPORTS on-chain
+const MIN_RAISE_USD = 100_000;
 
 export default function LaunchPage() {
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
@@ -22,9 +22,7 @@ export default function LaunchPage() {
     raiseGoalUsd: MIN_RAISE_USD,
   });
 
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [txSig, setTxSig] = useState<string>("");
   const [error, setError] = useState<string>("");
 
@@ -34,7 +32,7 @@ export default function LaunchPage() {
 
   const handleSubmit = async () => {
     if (!publicKey || !signTransaction || !signAllTransactions) {
-      setError("Conecta tu wallet primero");
+      setError("Connect your wallet first");
       return;
     }
 
@@ -51,9 +49,9 @@ export default function LaunchPage() {
       const program = getProgram(provider);
       const [platformPda] = getPlatformPda();
 
-      // Obtener el project ID actual
       const platform = await program.account["platform"].fetch(platformPda);
-      const projectId = (platform as any).totalProjects as bigint;
+      // Anchor returns BN for u64 fields — convert explicitly to native BigInt
+      const projectId = BigInt((platform as any).totalProjects.toString());
 
       const [projectPda] = getProjectPda(projectId);
       const [vaultPda] = getVaultPda(projectId);
@@ -85,7 +83,6 @@ export default function LaunchPage() {
       setTxSig(tx);
       setStatus("success");
 
-      // Sincronizar con la DB vía API
       await fetch("/api/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,7 +90,7 @@ export default function LaunchPage() {
       });
     } catch (e: any) {
       console.error(e);
-      setError(e.message || "Error al crear el proyecto");
+      setError(e.message || "Error creating project");
       setStatus("error");
     }
   };
@@ -101,26 +98,26 @@ export default function LaunchPage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-16">
       <div className="mb-10">
-        <h1 className="font-body text-3xl font-bold mb-2">Lanzar Proyecto</h1>
+        <h1 className="font-body text-3xl font-bold mb-2">Launch Project</h1>
         <p className="text-quorum-muted text-sm">
-          Tu proyecto será validado por la comunidad antes de que nadie ponga un
-          centavo. Rellena la información con honestidad — es tu primera señal.
+          Your project will be validated by the community before anyone puts in a
+          cent. Fill in the information honestly — it&apos;s your first signal.
         </p>
       </div>
 
-      {/* Reglas del protocolo */}
+      {/* Protocol rules */}
       <div className="card border-quorum-green/20 bg-quorum-green-dim mb-8">
         <h3 className="font-display text-xs text-quorum-green tracking-widest uppercase mb-3">
-          Reglas del Protocolo
+          Protocol Rules
         </h3>
         <ul className="space-y-1.5">
           {[
-            "Fase 1: 30 días de votación social (sin capital en juego)",
-            "Fase 2: 270 días de contribuciones — mínimo 1,000 holders",
-            "Cada holder puede tener máximo 0.1% del supply",
-            "Vesting bilateral de 9 meses — dev y holders bloqueados",
-            "La plataforma retiene 0.1% del total recaudado",
-            "Si no se alcanza la meta → 99% devuelto automáticamente",
+            "Phase 1: 30-day social voting period (no capital at stake)",
+            "Phase 2: 270-day contribution window — minimum 1,000 holders required",
+            "Each holder can own at most 0.1% of the supply",
+            "Bilateral 9-month vesting — dev and holders locked equally",
+            "Platform retains 0.1% of total raised",
+            "If the goal is not reached → 99% automatically refunded on-chain",
           ].map((rule) => (
             <li key={rule} className="flex items-start gap-2 text-xs text-quorum-text">
               <span className="text-quorum-green mt-0.5">✓</span>
@@ -130,22 +127,19 @@ export default function LaunchPage() {
         </ul>
       </div>
 
-      {/* Formulario */}
       {!publicKey ? (
         <div className="card text-center py-12 border-dashed">
-          <p className="text-quorum-muted mb-4">
-            Conecta tu wallet para continuar
-          </p>
+          <p className="text-quorum-muted mb-4">Connect your wallet to continue</p>
         </div>
       ) : status === "success" ? (
         <SuccessState txSig={txSig} />
       ) : (
         <div className="space-y-6">
           <div>
-            <label className="label">Nombre del Proyecto *</label>
+            <label className="label">Project Name *</label>
             <input
               className="input"
-              placeholder="Ej: Quorum Finance"
+              placeholder="E.g.: Quorum Finance"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               maxLength={64}
@@ -156,7 +150,7 @@ export default function LaunchPage() {
             <label className="label">Ticker *</label>
             <input
               className="input"
-              placeholder="Ej: QRMD"
+              placeholder="E.g.: QRMD"
               value={form.ticker}
               onChange={(e) =>
                 setForm({ ...form, ticker: e.target.value.toUpperCase() })
@@ -164,41 +158,37 @@ export default function LaunchPage() {
               maxLength={10}
             />
             <p className="text-xs text-quorum-muted mt-1 font-display">
-              Máximo 10 caracteres. Se convierte a mayúsculas automáticamente.
+              Max 10 characters. Automatically uppercased.
             </p>
           </div>
 
           <div>
-            <label className="label">Descripción de la Utilidad *</label>
+            <label className="label">Utility Description *</label>
             <textarea
               className="input min-h-[120px] resize-none"
-              placeholder="Explica qué hace tu proyecto, qué problema resuelve y por qué es útil para la comunidad..."
+              placeholder="Explain what your project does, what problem it solves, and why it is useful to the community..."
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
               maxLength={512}
             />
             <p className="text-xs text-quorum-muted mt-1 font-display">
-              {form.description.length}/512 caracteres
+              {form.description.length}/512 characters
             </p>
           </div>
 
           <div>
-            <label className="label">Sitio Web o Repositorio</label>
+            <label className="label">Website or Repository</label>
             <input
               className="input"
-              placeholder="https://tu-proyecto.com o https://github.com/..."
+              placeholder="https://your-project.com or https://github.com/..."
               value={form.websiteUrl}
-              onChange={(e) =>
-                setForm({ ...form, websiteUrl: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })}
               maxLength={128}
             />
           </div>
 
           <div>
-            <label className="label">Meta de Recaudación (USD)</label>
+            <label className="label">Raise Goal (USD)</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-quorum-muted font-display text-sm">
                 $
@@ -209,37 +199,33 @@ export default function LaunchPage() {
                 min={MIN_RAISE_USD}
                 value={form.raiseGoalUsd}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    raiseGoalUsd: Number(e.target.value),
-                  })
+                  setForm({ ...form, raiseGoalUsd: Number(e.target.value) })
                 }
               />
             </div>
             <p className="text-xs text-quorum-muted mt-1 font-display">
-              Mínimo ${MIN_RAISE_USD} USD. Equivale a ≈{" "}
+              Minimum ${MIN_RAISE_USD.toLocaleString()} USD. Equivalent to ≈{" "}
               {(raiseGoalLamports / LAMPORTS_PER_SOL).toFixed(2)} SOL.
             </p>
 
-            {/* Preview de distribución */}
             <div className="mt-3 p-4 bg-quorum-bg border border-quorum-border rounded-lg space-y-2">
               <p className="text-xs text-quorum-muted font-display tracking-wider uppercase">
-                Con tu meta de ${form.raiseGoalUsd}:
+                With your goal of ${form.raiseGoalUsd.toLocaleString()}:
               </p>
               <div className="flex justify-between text-xs">
-                <span className="text-quorum-muted">Fee de plataforma (0.1%)</span>
+                <span className="text-quorum-muted">Platform fee (0.1%)</span>
                 <span className="font-display text-quorum-text">
                   ${(form.raiseGoalUsd * 0.001).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-quorum-muted">Fondos netos al proyecto</span>
+                <span className="text-quorum-muted">Net funds to project</span>
                 <span className="font-display text-quorum-green">
                   ${(form.raiseGoalUsd * 0.999).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-quorum-muted">Max por holder (0.1%)</span>
+                <span className="text-quorum-muted">Max per holder (0.1%)</span>
                 <span className="font-display text-quorum-text">
                   ${(form.raiseGoalUsd * 0.001).toFixed(2)}
                 </span>
@@ -267,16 +253,16 @@ export default function LaunchPage() {
             {status === "loading" ? (
               <span className="flex items-center justify-center gap-2">
                 <LoadingSpinner />
-                Creando proyecto...
+                Creating project...
               </span>
             ) : (
-              "Crear Proyecto y Empezar Votación Social →"
+              "Create Project & Start Social Voting →"
             )}
           </button>
 
           <p className="text-xs text-center text-quorum-muted font-display">
-            Al crear el proyecto, aceptas que tu wallet quedará asociada públicamente
-            a este proyecto on-chain.
+            By creating the project, you agree that your wallet will be publicly
+            linked to this project on-chain.
           </p>
         </div>
       )}
@@ -291,14 +277,14 @@ function SuccessState({ txSig }: { txSig: string }) {
         <span className="text-2xl">🎉</span>
       </div>
       <h3 className="font-body font-bold text-xl mb-2 text-quorum-green">
-        ¡Proyecto creado!
+        Project created!
       </h3>
       <p className="text-quorum-muted text-sm mb-6">
-        La votación social ha comenzado. Tienes 30 días para que la comunidad
-        valide tu propuesta.
+        Social voting has started. You have 30 days for the community to
+        validate your proposal.
       </p>
       <div className="bg-quorum-bg border border-quorum-border rounded-lg p-3 mb-6">
-        <p className="text-xs text-quorum-muted font-display mb-1">Transacción</p>
+        <p className="text-xs text-quorum-muted font-display mb-1">Transaction</p>
         <a
           href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
           target="_blank"
@@ -309,7 +295,7 @@ function SuccessState({ txSig }: { txSig: string }) {
         </a>
       </div>
       <a href="/" className="btn-primary inline-block">
-        Ver todos los proyectos
+        View all projects
       </a>
     </div>
   );
@@ -317,11 +303,7 @@ function SuccessState({ txSig }: { txSig: string }) {
 
 function LoadingSpinner() {
   return (
-    <svg
-      className="animate-spin h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
+    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
       <circle
         className="opacity-25"
         cx="12"
