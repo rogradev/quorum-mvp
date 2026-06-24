@@ -6,7 +6,7 @@ import { Keypair, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { AnchorProvider, BN } from "@coral-xyz/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getProgram, getPlatformPda, getProjectPda, getVaultPda } from "@/lib/anchor";
-import { SOL_PRICE_USD } from "@/lib/constants";
+import { SOL_PRICE_USD, MIN_RAISE_LAMPORTS } from "@/lib/constants";
 
 const MIN_RAISE_USD = 100_000;
 
@@ -26,8 +26,11 @@ export default function LaunchPage() {
   const [txSig, setTxSig] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  const raiseGoalLamports = Math.floor(
-    (form.raiseGoalUsd / SOL_PRICE_USD) * LAMPORTS_PER_SOL
+  // Clamp to the on-chain minimum to avoid floating-point rounding falling
+  // just below MIN_RAISE_LAMPORTS (e.g. $100k → 666_666_666_666 vs 666_666_667_000).
+  const raiseGoalLamports = Math.max(
+    Math.ceil((form.raiseGoalUsd / SOL_PRICE_USD) * LAMPORTS_PER_SOL),
+    Number(MIN_RAISE_LAMPORTS)
   );
 
   const handleSubmit = async () => {
