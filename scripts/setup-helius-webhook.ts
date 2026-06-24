@@ -94,18 +94,21 @@ async function main() {
     w.webhookURL?.includes("/api/webhook")
   );
   for (const w of duplicates) {
-    console.log(`   ⚠️  Removing existing webhook ${w.webhookId} → ${w.webhookURL}`);
-    await deleteWebhook(w.webhookId);
+    const wId = w.webhookID ?? w.webhookId ?? w.id;
+    console.log(`   ⚠️  Removing existing webhook ${wId} → ${w.webhookURL}`);
+    if (wId) await deleteWebhook(wId);
   }
 
   console.log("📡 Registering new webhook...");
   const created = await createWebhook(webhookUrl);
+  const id = created.webhookID ?? created.webhookId ?? created.id ?? "(see raw output)";
   console.log("\n✅ Webhook registered successfully!");
-  console.log(`   ID     : ${created.webhookId}`);
+  console.log(`   ID     : ${id}`);
   console.log(`   URL    : ${created.webhookURL}`);
   console.log(`   Type   : ${created.webhookType}`);
   console.log(`   Txn    : ${created.transactionTypes?.join(", ")}`);
-  console.log(`\nSave this webhook ID if you need to update it later:\n   ${created.webhookId}\n`);
+  console.log(`\nRaw response: ${JSON.stringify(created, null, 2)}`);
+  console.log(`\nSave this webhook ID if you need to update it later:\n   ${id}\n`);
 }
 
 main().catch((err) => {
