@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
-import { makeReadonlyProgram, syncLatestProject, syncProject, syncAllProjects } from "@/lib/sync";
+import { makeReadonlyProgram, syncLatestProject, syncProject, syncAllProjects, syncVote } from "@/lib/sync";
 import { RPC_ENDPOINT } from "@/lib/constants";
 
 // POST /api/sync — manual on-chain → DB sync, called by frontend after each tx
@@ -18,6 +18,14 @@ export async function POST(request: Request) {
         break;
 
       case "social_vote":
+        // Atomic DB increment — avoids RPC propagation lag that causes
+        // syncProject to read socialVotes=0 immediately after confirmation.
+        // The Helius webhook reconciles with chain truth via syncProject later.
+        if (projectId !== undefined) {
+          await syncVote(BigInt(projectId));
+        }
+        break;
+
       case "contribute":
       case "finalize":
         if (projectId !== undefined) {

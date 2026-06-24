@@ -116,6 +116,20 @@ export async function syncProject(program: Program<Quorum>, projectId: bigint) {
   }
 }
 
+// Increment socialVotes in the DB without an RPC round-trip.
+// Used for immediate frontend feedback after castSocialVote; the Helius
+// webhook later reconciles with chain truth via syncProject.
+export async function syncVote(projectId: bigint) {
+  try {
+    await prisma.project.update({
+      where: { projectId },
+      data: { socialVotes: { increment: 1n } },
+    });
+  } catch (e) {
+    console.error(`Error incrementing vote for project ${projectId}:`, e);
+  }
+}
+
 export async function syncAllProjects(program: Program<Quorum>, connection: Connection) {
   const [platformPda] = getPlatformPda();
   try {
