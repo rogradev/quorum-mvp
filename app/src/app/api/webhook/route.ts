@@ -17,13 +17,38 @@ const QUORUM_INSTRUCTIONS = [
 // POST /api/webhook — Helius webhook for automatic on-chain event sync
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader !== process.env.HELIUS_WEBHOOK_SECRET) {
+  const secretSet = !!process.env.HELIUS_WEBHOOK_SECRET;
+  const authMatch = authHeader === process.env.HELIUS_WEBHOOK_SECRET;
+
+  console.log("[webhook] incoming request", {
+    secretEnvSet: secretSet,
+    authHeaderPresent: !!authHeader,
+    authMatch,
+  });
+
+  if (!authHeader || !authMatch) {
+    console.error("[webhook] auth rejected — secretEnvSet:", secretSet, "authHeaderPresent:", !!authHeader, "match:", authMatch);
     return NextResponse.json({ error: "Unauthorized" }, { status: 400 });
   }
 
   try {
     const body = await request.json();
     const transactions: any[] = Array.isArray(body) ? body : [body];
+
+    console.log("[webhook] received", transactions.length, "transaction(s)");
+    transactions.forEach((tx, i) => {
+      const logs = extractLogs(tx);
+      const accounts = extractAccounts(tx);
+      const quorumLogs = logs.filter((l) => l.includes("Program log: Instruction:"));
+      console.log(`[webhook] tx[${i}]`, {
+        signature: tx.signature ?? tx.transaction?.signatures?.[0] ?? "unknown",
+        hasError: !!(tx.transactionError),
+        logCount: logs.length,
+        accountCount: accounts.length,
+        quorumLogs,
+        payloadKeys: Object.keys(tx),
+      });
+    });
 
     const program = makeReadonlyProgram();
     const connection = new Connection(RPC_ENDPOINT, "confirmed");
