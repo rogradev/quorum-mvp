@@ -1,5 +1,5 @@
 {
-  "address": "DVxHFqsi2zgxvMLGjmtEBBPJ8o4dFBVWtdSHt77sMMrk",
+  "address": "J9o5cuQAkeCWAfGsnE2qxRNAM1hbXCo7MTLxqyjecm1y",
   "metadata": {
     "name": "quorum",
     "version": "0.1.0",
@@ -84,6 +84,191 @@
       "args": []
     },
     {
+      "name": "claim_tokens",
+      "discriminator": [
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "contribution",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              },
+              {
+                "kind": "account",
+                "path": "contributor"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true
+        },
+        {
+          "name": "contributor_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "contributor"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "contributor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "close_social_phase",
       "discriminator": [
         99,
@@ -123,6 +308,74 @@
         },
         {
           "name": "caller",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_vault",
+      "discriminator": [
+        141,
+        103,
+        17,
+        126,
+        72,
+        75,
+        29,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "project",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  106,
+                  101,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "project.project_id",
+                "account": "Project"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller",
+          "writable": true,
           "signer": true
         }
       ],
@@ -836,173 +1089,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "close_vault",
-      "discriminator": [
-        141,
-        103,
-        17,
-        126,
-        72,
-        75,
-        29,
-        29
-      ],
-      "accounts": [
-        {
-          "name": "project",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  114,
-                  111,
-                  106,
-                  101,
-                  99,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "project.project_id",
-                "account": "Project"
-              }
-            ]
-          }
-        },
-        {
-          "name": "vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "project.project_id",
-                "account": "Project"
-              }
-            ]
-          }
-        },
-        {
-          "name": "caller",
-          "writable": true,
-          "signer": true
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "claim_tokens",
-      "discriminator": [
-        108,
-        216,
-        210,
-        231,
-        0,
-        212,
-        42,
-        64
-      ],
-      "accounts": [
-        {
-          "name": "project",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  114,
-                  111,
-                  106,
-                  101,
-                  99,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "project.project_id",
-                "account": "Project"
-              }
-            ]
-          }
-        },
-        {
-          "name": "contribution",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  116,
-                  114,
-                  105,
-                  98,
-                  117,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "project.project_id",
-                "account": "Project"
-              },
-              {
-                "kind": "account",
-                "path": "contributor"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint",
-          "writable": true
-        },
-        {
-          "name": "contributor_token_account",
-          "writable": true
-        },
-        {
-          "name": "contributor",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe1bC8"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -1139,6 +1225,32 @@
       ]
     },
     {
+      "name": "GraduationAvailable",
+      "discriminator": [
+        139,
+        237,
+        204,
+        69,
+        1,
+        7,
+        143,
+        112
+      ]
+    },
+    {
+      "name": "GraduationCompleted",
+      "discriminator": [
+        194,
+        201,
+        196,
+        1,
+        19,
+        204,
+        8,
+        1
+      ]
+    },
+    {
       "name": "HealthCheckEmitted",
       "discriminator": [
         174,
@@ -1152,6 +1264,19 @@
       ]
     },
     {
+      "name": "HoldersGoalReached",
+      "discriminator": [
+        126,
+        58,
+        186,
+        10,
+        117,
+        248,
+        38,
+        2
+      ]
+    },
+    {
       "name": "ProjectCreated",
       "discriminator": [
         192,
@@ -1162,6 +1287,32 @@
         31,
         67,
         168
+      ]
+    },
+    {
+      "name": "RaiseGoalReached",
+      "discriminator": [
+        214,
+        17,
+        239,
+        140,
+        151,
+        185,
+        85,
+        134
+      ]
+    },
+    {
+      "name": "RefundProcessed",
+      "discriminator": [
+        203,
+        88,
+        236,
+        233,
+        192,
+        178,
+        57,
+        161
       ]
     },
     {
@@ -1191,32 +1342,6 @@
       ]
     },
     {
-      "name": "RefundProcessed",
-      "discriminator": [
-        203,
-        88,
-        236,
-        233,
-        192,
-        178,
-        57,
-        161
-      ]
-    },
-    {
-      "name": "VaultClosed",
-      "discriminator": [
-        238,
-        129,
-        38,
-        228,
-        227,
-        118,
-        249,
-        215
-      ]
-    },
-    {
       "name": "TokensClaimed",
       "discriminator": [
         25,
@@ -1230,55 +1355,16 @@
       ]
     },
     {
-      "name": "GraduationCompleted",
+      "name": "VaultClosed",
       "discriminator": [
-        194,
-        201,
-        196,
-        1,
-        19,
-        204,
-        8,
-        1
-      ]
-    },
-    {
-      "name": "HoldersGoalReached",
-      "discriminator": [
-        126,
-        58,
-        186,
-        10,
-        117,
-        248,
+        238,
+        129,
         38,
-        2
-      ]
-    },
-    {
-      "name": "RaiseGoalReached",
-      "discriminator": [
-        214,
-        17,
-        239,
-        140,
-        151,
-        185,
-        85,
-        134
-      ]
-    },
-    {
-      "name": "GraduationAvailable",
-      "discriminator": [
-        139,
-        237,
-        204,
-        69,
-        1,
-        7,
-        143,
-        112
+        228,
+        227,
+        118,
+        249,
+        215
       ]
     }
   ],
@@ -1509,18 +1595,18 @@
             "type": "i64"
           },
           {
-            "name": "sol_price_at_contribution",
-            "docs": [
-              "Precio de SOL en USD al momento de la contribución"
-            ],
-            "type": "u64"
-          },
-          {
             "name": "refunded_at",
             "docs": [
               "Timestamp del reembolso (0 si no ha sido reembolsado)"
             ],
             "type": "i64"
+          },
+          {
+            "name": "sol_price_at_contribution",
+            "docs": [
+              "Precio de SOL en USD al momento de la contribución (consulta Pyth)"
+            ],
+            "type": "u64"
           },
           {
             "name": "bump",
@@ -1689,6 +1775,66 @@
       }
     },
     {
+      "name": "GraduationAvailable",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "holder_count",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
+          },
+          {
+            "name": "available_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GraduationCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "holder_count",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
+          },
+          {
+            "name": "graduated_at",
+            "type": "i64"
+          },
+          {
+            "name": "days_elapsed",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "HealthCheckEmitted",
       "type": {
         "kind": "struct",
@@ -1719,6 +1865,26 @@
           },
           {
             "name": "checked_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HoldersGoalReached",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "holder_count",
+            "type": "u64"
+          },
+          {
+            "name": "reached_at",
             "type": "i64"
           }
         ]
@@ -1856,8 +2022,7 @@
           {
             "name": "economic_phase_active",
             "docs": [
-              "Si la fase económica ya está abierta",
-              "Puede ser true mientras la social sigue activa (Día 15+)"
+              "Si la fase económica ya está abierta"
             ],
             "type": "bool"
           },
@@ -1871,8 +2036,7 @@
           {
             "name": "raise_goal",
             "docs": [
-              "Meta de recaudación definida por el dev (en lamports)",
-              "Debe ser >= MIN_RAISE_LAMPORTS ($100,000 USD equiv.)"
+              "Meta de recaudación definida por el dev (en lamports)"
             ],
             "type": "u64"
           },
@@ -1899,16 +2063,10 @@
           },
           {
             "name": "health_check_1_emitted",
-            "docs": [
-              "Si ya se emitió el health check del Mes 3"
-            ],
             "type": "bool"
           },
           {
             "name": "health_check_2_emitted",
-            "docs": [
-              "Si ya se emitió el health check del Mes 6"
-            ],
             "type": "bool"
           },
           {
@@ -1926,29 +2084,23 @@
           {
             "name": "vesting_start",
             "docs": [
-              "Timestamp en que empieza el vesting (= economic_phase_open)"
+              "Timestamp en que empieza la ventana de fondeo (= economic_phase_open)"
             ],
             "type": "i64"
           },
           {
             "name": "vesting_end",
             "docs": [
-              "Timestamp en que termina el vesting y se evalúa la graduación (Día 284)"
+              "Timestamp en que cierra la ventana de fondeo (Día 284)"
             ],
             "type": "i64"
           },
           {
             "name": "last_dev_activity",
-            "docs": [
-              "Último timestamp de actividad registrada del dev"
-            ],
             "type": "i64"
           },
           {
             "name": "dev_locked",
-            "docs": [
-              "Si el dev está bloqueado por inactividad (60 días sin actividad)"
-            ],
             "type": "bool"
           },
           {
@@ -2012,6 +2164,62 @@
           },
           {
             "name": "Graduated"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaiseGoalReached",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "sol_price_usd",
+            "type": "u64"
+          },
+          {
+            "name": "reached_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RefundProcessed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "contributor",
+            "type": "pubkey"
+          },
+          {
+            "name": "refund_amount",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_at",
+            "type": "i64"
+          },
+          {
+            "name": "vault_total_refunded",
+            "type": "u64"
+          },
+          {
+            "name": "vault_total_received",
+            "type": "u64"
           }
         ]
       }
@@ -2102,47 +2310,7 @@
       }
     },
     {
-      "name": "VaultAccount",
-      "docs": [
-        "Vault del proyecto — custodia SOL de contribuidores.",
-        "PDA derivada de [VAULT_SEED, project_id]"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project",
-            "docs": [
-              "PDA del proyecto propietario"
-            ],
-            "type": "pubkey"
-          },
-          {
-            "name": "total_received",
-            "docs": [
-              "Total SOL neto recibido en lamports"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "total_refunded",
-            "docs": [
-              "Total SOL devuelto en reembolsos en lamports"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "bump",
-            "docs": [
-              "Bump del PDA"
-            ],
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RefundProcessed",
+      "name": "TokensClaimed",
       "type": {
         "kind": "struct",
         "fields": [
@@ -2155,20 +2323,48 @@
             "type": "pubkey"
           },
           {
-            "name": "refund_amount",
+            "name": "tokens_minted",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultAccount",
+      "docs": [
+        "Vault del proyecto — custodia SOL de contribuidores y lleva contabilidad.",
+        "PDA derivada de [VAULT_SEED, project_id]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project",
+            "docs": [
+              "PDA del proyecto propietario de este vault"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "total_received",
+            "docs": [
+              "Total de SOL (neto de fees) recibido de contribuidores (en lamports)"
+            ],
             "type": "u64"
           },
           {
-            "name": "refunded_at",
-            "type": "i64"
-          },
-          {
-            "name": "vault_total_refunded",
+            "name": "total_refunded",
+            "docs": [
+              "Total de SOL devuelto en reembolsos (en lamports)"
+            ],
             "type": "u64"
           },
           {
-            "name": "vault_total_received",
-            "type": "u64"
+            "name": "bump",
+            "docs": [
+              "Bump del PDA"
+            ],
+            "type": "u8"
           }
         ]
       }
@@ -2193,130 +2389,6 @@
           {
             "name": "closed_by",
             "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TokensClaimed",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "contributor",
-            "type": "pubkey"
-          },
-          {
-            "name": "tokens_minted",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "GraduationCompleted",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "total_raised",
-            "type": "u64"
-          },
-          {
-            "name": "holder_count",
-            "type": "u64"
-          },
-          {
-            "name": "sol_price_usd",
-            "type": "u64"
-          },
-          {
-            "name": "graduated_at",
-            "type": "i64"
-          },
-          {
-            "name": "days_elapsed",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "HoldersGoalReached",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "holder_count",
-            "type": "u64"
-          },
-          {
-            "name": "reached_at",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RaiseGoalReached",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "total_raised",
-            "type": "u64"
-          },
-          {
-            "name": "sol_price_usd",
-            "type": "u64"
-          },
-          {
-            "name": "reached_at",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "GraduationAvailable",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "project_id",
-            "type": "u64"
-          },
-          {
-            "name": "total_raised",
-            "type": "u64"
-          },
-          {
-            "name": "holder_count",
-            "type": "u64"
-          },
-          {
-            "name": "sol_price_usd",
-            "type": "u64"
-          },
-          {
-            "name": "available_at",
-            "type": "i64"
           }
         ]
       }
