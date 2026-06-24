@@ -123,9 +123,20 @@ export default function ProjectPage() {
 
       setHasVoted(true);
       setActionStatus("success");
+
+      await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "social_vote", projectId: project.projectId }),
+      });
       fetchProject();
     } catch (e: any) {
-      setActionError(e.message || "Error voting");
+      const msg: string = e?.message ?? "";
+      const logs: string[] = e?.logs ?? [];
+      const alreadyVoted =
+        msg.includes("already in use") ||
+        logs.some((l: string) => l.includes("already in use"));
+      setActionError(alreadyVoted ? "You have already voted on this project." : msg || "Error voting");
       setActionStatus("error");
     }
   };
@@ -171,6 +182,12 @@ export default function ProjectPage() {
 
       setHasContributed(true);
       setActionStatus("success");
+
+      await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "contribute", projectId: project.projectId }),
+      });
       fetchProject();
     } catch (e: any) {
       setActionError(e.message || "Error contributing");
